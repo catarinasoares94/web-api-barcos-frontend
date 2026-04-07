@@ -1,9 +1,11 @@
 <template>
   <h2>Marinheiros</h2>
 
-  <button @click="carregar">Listar Marinheiros</button>
+  <button @click="toggle">
+    {{ mostrarTabela ? 'Esconder Marinheiros' : 'Listar Marinheiros' }}
+  </button><p></p>
 
-  <table v-if="marinheiros.length > 0" border="1">
+  <table v-if="mostrarTabela && marinheiros.length > 0" border="1">
     <thead>
       <tr>
         <th>ID</th>
@@ -28,14 +30,20 @@
 export default {
   data() {
     return {
-      marinheiros: []
+      marinheiros: [],
+      mostrarTabela: false
     }
   },
 
   methods: {
-    async carregar() {
-      const res = await fetch("http://localhost:8080/api/marinheiros")
-      this.marinheiros = await res.json()
+    async toggle() {
+      this.mostrarTabela = !this.mostrarTabela
+
+      // só vai buscar dados quando abre
+      if (this.mostrarTabela && this.marinheiros.length === 0) {
+        const res = await fetch("http://localhost:8080/api/marinheiros")
+        this.marinheiros = await res.json()
+      }
     }
   }
 }
