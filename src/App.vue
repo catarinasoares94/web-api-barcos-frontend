@@ -1,7 +1,7 @@
 <template>
-  <p>Escolhe a funcionalidade:</p>
+  <h1>Escolha o Perfil de Utilizador:</h1>
 
-  <router-link to="/marinheiros">Marinheiros</router-link>
+  <router-link to="/marinheiros">Sou Gestor</router-link>
   <router-link to="/barcos">Barcos</router-link>
   <router-link to="/reservas">Reservas</router-link>
 
