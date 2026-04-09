@@ -164,6 +164,9 @@ export default {
       if (this.mostrarTabela && this.marinheiros.length === 0) {
         const res = await fetch('http://localhost:8080/api/marinheiros')
         this.marinheiros = await res.json()
+        } else {
+    this.marinheiros = []
+
       }
     },
     // US001 - Registo de Marinheiros
@@ -237,19 +240,19 @@ export default {
 <style>
 .container {
   display: flex !important;
+  flex-wrap: wrap;
   flex-direction: row;
+  justify-content: flex-start;
   align-items: flex-start;
-  gap: 40px;
+  gap: 20px;
 }
 
 .box {
   border: 1px dashed black;
   padding: 20px;
-  width: 350px;
-}
 
-.container > .box {
-  flex: 0 0 auto;
+  flex: 1 1 320px; /* ligeiramente maior */
+  max-width: 500px;
 }
 
 .form {
@@ -259,14 +262,29 @@ export default {
 }
 
 input {
+  width: 100%;
+  box-sizing: border-box;
   padding: 6px;
   border: 1px solid #999;
 }
 
 button {
+
   margin-top: 10px;
   margin-right: 10px;
-  padding: 8px;
+  padding: 6px;
   cursor: pointer;
 }
+
+table {
+  width: 100%;
+  overflow-x: auto;
+  border-collapse: collapse;
+}
+
+th, td {
+  padding: 8px;
+  text-align: center;
+}
+
 </style>
