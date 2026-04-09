@@ -147,6 +147,24 @@
       {{ erroUpdate }}
     </p>
   </div>
+
+  <!-- US006 - ELIMINAR MARINHEIRO (SEM RESERVA ASSOCIADA OBRIGATORIO) -->
+  <div class="box">
+    <h2>Eliminar Marinheiro</h2>
+
+    <label>ID</label>
+    <input type="number" v-model="idDelete" placeholder="Ex: 100" />
+
+    <button @click="eliminarMarinheiro">Eliminar</button>
+
+    <p v-if="mensagemDelete" style="color: green">
+      {{ mensagemDelete }}
+    </p>
+
+    <p v-if="erroDelete" style="color: red">
+      {{ erroDelete }}
+    </p>
+  </div>
 </template>
 
 <script>
@@ -182,6 +200,11 @@ export default {
       },
       mensagemUpdate: '',
       erroUpdate: '',
+
+      // US006 - Eliminar Marinheiro (Só funciona se não tiver nenhuma reserva associada)
+      idDelete: '',
+      mensagemDelete: '',
+      erroDelete: '',
     }
   },
 
@@ -298,6 +321,35 @@ export default {
         this.erroUpdate = 'Erro na ligação ao servidor.'
       }
     },
+    // US006 - Eliminar Marinheiro (Só funciona se não tiver nenhuma reserva associada)
+    async eliminarMarinheiro() {
+      this.mensagemDelete = ''
+      this.erroDelete = ''
+
+      if (!this.idDelete) {
+        this.erroDelete = 'Indica um ID'
+        return
+      }
+
+      try {
+        const res = await fetch(`http://localhost:8080/api/marinheiros/${this.idDelete}`, {
+          method: 'DELETE',
+        })
+
+        const data = await res.json()
+
+        if (res.ok) {
+          this.mensagemDelete = data.message
+          this.idDelete = ''
+
+          this.atualizarLista()
+        } else {
+          this.erroDelete = data.error
+        }
+      } catch (err) {
+        this.erroDelete = 'Erro na ligação ao servidor'
+      }
+    },
   },
 }
 </script>
@@ -316,7 +368,7 @@ export default {
   border: 1px dashed black;
   padding: 20px;
 
-  flex: 1 1 220px; 
+  flex: 1 1 220px;
   max-width: 500px;
 }
 
@@ -341,7 +393,6 @@ label {
   margin-top: 10px;
   display: block;
 }
-
 
 button {
   margin-top: 10px;
