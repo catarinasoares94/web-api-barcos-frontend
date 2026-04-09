@@ -126,6 +126,27 @@
       </p>
     </div>
   </div>
+
+  <!-- US005 - UPDATE DE CLASSIFICAÇAO ATRAVES DE ID -->
+  <div class="box">
+    <h2>Atualizar Classificação do Marinheiro</h2>
+
+    <label>ID</label>
+    <input type="number" v-model="update.id" placeholder="Ex: 100" />
+
+    <label>Nova Classificação</label>
+    <input type="number" v-model="update.classificacao" placeholder="Ex: 8" />
+
+    <button @click="atualizarClassificacao">Atualizar</button>
+
+    <p v-if="mensagemUpdate" style="color: green">
+      {{ mensagemUpdate }}
+    </p>
+
+    <p v-if="erroUpdate" style="color: red">
+      {{ erroUpdate }}
+    </p>
+  </div>
 </template>
 
 <script>
@@ -153,6 +174,14 @@ export default {
       idPesquisa: '',
       marinheiroEncontrado: [],
       erroId: '',
+
+      // US005 - Update de Classificacao Atraves de ID
+      update: {
+        id: '',
+        classificacao: '',
+      },
+      mensagemUpdate: '',
+      erroUpdate: '',
     }
   },
 
@@ -164,9 +193,8 @@ export default {
       if (this.mostrarTabela && this.marinheiros.length === 0) {
         const res = await fetch('http://localhost:8080/api/marinheiros')
         this.marinheiros = await res.json()
-        } else {
-    this.marinheiros = []
-
+      } else {
+        this.marinheiros = []
       }
     },
     // US001 - Registo de Marinheiros
@@ -220,6 +248,7 @@ export default {
         this.erroFiltro = erro.erro || 'Nenhum Marinheiro com essa Classificação'
       }
     },
+    // US004 - Filtro por ID
     async procurarPorId() {
       this.erroId = ''
       this.marinheiroEncontrado = []
@@ -231,6 +260,42 @@ export default {
       } else {
         const erro = await res.json()
         this.erroId = erro.erro || 'Marinheiro não encontrado'
+      }
+    },
+    // US005 - Update de Classificacao Atraves de ID
+    async atualizarClassificacao() {
+      this.mensagemUpdate = ''
+      this.erroUpdate = ''
+
+      if (!this.update.id || !this.update.classificacao) {
+        this.erroUpdate = 'Preenche todos os campos'
+        return
+      }
+
+      try {
+        const res = await fetch(`http://localhost:8080/api/marinheiros/${this.update.id}`, {
+          method: 'PATCH',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            classificacao: this.update.classificacao,
+          }),
+        })
+
+        const data = await res.json()
+
+        if (res.ok) {
+          this.mensagemUpdate = data.message
+
+          this.update = { id: '', classificacao: '' }
+
+          this.atualizarLista()
+        } else {
+          this.erroUpdate = data.error || 'Erro ao atualizar.'
+        }
+      } catch (err) {
+        this.erroUpdate = 'Erro na ligação ao servidor.'
       }
     },
   },
@@ -251,8 +316,12 @@ export default {
   border: 1px dashed black;
   padding: 20px;
 
-  flex: 1 1 320px; /* ligeiramente maior */
+  flex: 1 1 220px; 
   max-width: 500px;
+}
+
+.box:last-child {
+  margin-left: auto;
 }
 
 .form {
@@ -268,8 +337,13 @@ input {
   border: 1px solid #999;
 }
 
-button {
+label {
+  margin-top: 10px;
+  display: block;
+}
 
+
+button {
   margin-top: 10px;
   margin-right: 10px;
   padding: 6px;
@@ -282,9 +356,9 @@ table {
   border-collapse: collapse;
 }
 
-th, td {
+th,
+td {
   padding: 8px;
   text-align: center;
 }
-
 </style>
