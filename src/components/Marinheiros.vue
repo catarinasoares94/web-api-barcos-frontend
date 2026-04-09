@@ -10,6 +10,8 @@
         {{ mostrarTabela ? 'Esconder Marinheiros' : 'Listar Marinheiros' }}
       </button>
 
+      <button @click="atualizarLista" v-if="mostrarTabela"> Atualizar Lista </button>
+
       <p></p>
 
       <table v-if="mostrarTabela && marinheiros.length > 0" border="1">
@@ -106,11 +108,7 @@ export default {
           classificacao: ""
         }
 
-        if (this.mostrarTabela) {
-          const r = await fetch("http://localhost:8080/api/marinheiros")
-          this.marinheiros = await r.json()
-        }
-
+      
       } else {
         if (texto.includes("ORA-00001") || texto.toLowerCase().includes("unique")) {
           alert("ID já existe")
@@ -118,6 +116,11 @@ export default {
           alert("Erro ao registar")
         }
       }
+    },
+
+    async atualizarLista() {
+      const res = await fetch("http://localhost:8080/api/marinheiros")
+      this.marinheiros = await res.json()
     }
   }
 }
@@ -154,6 +157,7 @@ input {
 
 button {
   margin-top: 10px;
+  margin-right: 10px;
   padding: 8px;
   cursor: pointer;
 }
