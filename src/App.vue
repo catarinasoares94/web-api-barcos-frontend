@@ -1,36 +1,50 @@
 <template>
-  <h1>Escolha o Perfil de Utilizador:</h1>
+ <header class="navbar">
+    <h1>UPSKILL BARCOS</h1>
 
-  <router-link to="/marinheiros">Sou Gestor</router-link>
-  <router-link to="/barcos">Barcos</router-link>
-  <router-link to="/reservas">Reservas</router-link>
+    <nav>
+      <router-link to="/marinheiros">Gestão de Marinheiros</router-link>
+      <router-link to="/barcos">Gestão de Barcos</router-link>
+      <router-link to="/reservas">Gestão de Reservas</router-link>
+    </nav>
+  </header>
 
-  <br>
-
-  <div>
+  <main>
     <router-view></router-view>
-  </div>
+  </main>
 </template>
 
 <style scoped>
-a {
-  display: inline-block;
+.navbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+
   background-color: black;
-  border: solid 1px black;
   color: white;
-  padding: 5px;
-  margin: 10px;
+
+  padding: 15px 20px;
 }
 
-a:hover,
-a.router-link-active {
+h1 {
+  margin: 0;
+  font-size: 20px;
+}
+
+nav a {
+  color: white;
+  text-decoration: none;
+  margin-left: 15px;
+  padding: 6px 10px;
+  border-radius: 5px;
+}
+
+nav a:hover,
+.router-link-active {
   background-color: rgb(110, 79, 13);
 }
 
-div {
-  border: dashed black 1px;
+main {
   padding: 20px;
-  margin: 10px;
-  display: inline-block;
 }
 </style>

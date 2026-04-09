@@ -13,7 +13,7 @@
 
       <p></p>
 
-      <table v-if="mostrarTabela && marinheiros.length > 0" border="1">
+      <table v-if="mostrarTabela && marinheiros.length > 0" >
         <thead>
           <tr>
             <th>ID</th>
@@ -66,7 +66,7 @@
 
       <p></p>
 
-      <table v-if="marinheirosFiltrados.length > 0" border="1">
+      <table v-if="marinheirosFiltrados.length > 0" >
         <thead>
           <tr>
             <th>ID</th>
@@ -101,7 +101,7 @@
 
       <p></p>
 
-      <table v-if="marinheiroEncontrado.length > 0" border="1">
+      <table v-if="marinheiroEncontrado.length > 0" >
         <thead>
           <tr>
             <th>ID</th>
@@ -125,7 +125,6 @@
         {{ erroId }}
       </p>
     </div>
-  </div>
 
   <!-- US005 - UPDATE DE CLASSIFICAÇAO ATRAVES DE ID -->
   <div class="box">
@@ -164,6 +163,7 @@
     <p v-if="erroDelete" style="color: red">
       {{ erroDelete }}
     </p>
+  </div>
   </div>
 </template>
 
@@ -356,25 +356,44 @@ export default {
 
 <style>
 .container {
-  display: flex !important;
-  flex-wrap: wrap;
-  flex-direction: row;
-  justify-content: flex-start;
-  align-items: flex-start;
-  gap: 20px;
+  display: flex;
+  flex-direction: column; 
+  gap: 40px;              
+  max-width: 600px;           
+  margin: 20px 0 20px 40px;
 }
 
 .box {
-  border: 1px dashed black;
-  padding: 20px;
+  background: #ffffff;
+  border-radius: 14px;
+  padding: 25px;
+  box-shadow: 0 8px 20px rgba(192, 26, 26, 0.08);
+  border: 1px solid #ddd;
 
-  flex: 1 1 220px;
-  max-width: 500px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+
+  max-width: 350px;
+  width: 100%;
+  margin-bottom: 5px;
 }
 
-.box:last-child {
-  margin-left: auto;
+.box:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 8px 20px rgba(0,0,0,0.08);
 }
+
+.box h2 {
+  font-size: 18px;
+  margin-bottom: 10px;
+  border-bottom: 2px solid #f1f1f1;
+  padding-bottom: 5px;
+}
+
+
 
 .form {
   display: flex;
@@ -385,6 +404,15 @@ export default {
 input {
   width: 100%;
   box-sizing: border-box;
+  width: 100%;
+  padding: 8px;
+  border-radius: 6px;
+  border: 1px solid #ccc;
+  outline: none;
+}
+
+input:focus {
+  border-color: #007bff;
   padding: 6px;
   border: 1px solid #999;
 }
@@ -395,21 +423,47 @@ label {
 }
 
 button {
-  margin-top: 10px;
-  margin-right: 10px;
-  padding: 6px;
+  background: #007bff;
+  color: white;
+  border: none;
+  padding: 8px;
+  border-radius: 6px;
   cursor: pointer;
+  transition: 0.2s;
+}
+
+button:hover {
+  background: #0056b3;
 }
 
 table {
   width: 100%;
-  overflow-x: auto;
   border-collapse: collapse;
+  margin-top: 10px;
 }
 
-th,
-td {
+th {
+  background: #f5f5f5;
+}
+
+th, td {
   padding: 8px;
+  border: 1px solid #ddd;
   text-align: center;
 }
+
+.sucesso {
+  color: #2e7d32;
+  font-weight: 500;
+}
+
+.erro {
+  color: #c62828;
+  font-weight: 500;
+}
+
+body {
+  background: #f4f6f9;
+}
+
 </style>
