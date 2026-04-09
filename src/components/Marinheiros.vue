@@ -1,6 +1,5 @@
 <template>
   <div class="container">
-
     <!-- US02 - LISTAR TODOS OS MARINHEIROS -->
 
     <div class="box">
@@ -10,7 +9,7 @@
         {{ mostrarTabela ? 'Esconder Marinheiros' : 'Listar Marinheiros' }}
       </button>
 
-      <button @click="atualizarLista" v-if="mostrarTabela"> Atualizar Lista </button>
+      <button @click="atualizarLista" v-if="mostrarTabela">Atualizar Lista</button>
 
       <p></p>
 
@@ -40,7 +39,6 @@
       <h2>Registar Utilizador como Marinheiro</h2>
 
       <form @submit.prevent="registarMarinheiro" class="form">
-        
         <label>ID</label>
         <input type="number" v-model="novo.id_marinheiro" placeholder="ID" required />
 
@@ -54,10 +52,42 @@
         <input type="number" v-model="novo.classificacao" placeholder="Classificação" required />
 
         <button type="submit">Registar</button>
-
       </form>
     </div>
+    <div class="box">
+      <h2>Listar por Classificação</h2>
 
+      <label>Classificação</label>
+      <input type="number" v-model="filtroClassificacao" placeholder="Ex: 10" />
+
+      <button @click="listarPorClassificacao">Filtrar</button>
+
+      <p></p>
+
+      <table v-if="marinheirosFiltrados.length > 0" border="1">
+        <thead>
+          <tr>
+            <th>ID</th>
+            <th>Nome</th>
+            <th>Classificação</th>
+            <th>Idade</th>
+          </tr>
+        </thead>
+
+        <tbody>
+          <tr v-for="m in marinheirosFiltrados" :key="m[0]">
+            <td>{{ m[0] }}</td>
+            <td>{{ m[1] }}</td>
+            <td>{{ m[2] }}</td>
+            <td>{{ m[3] }}</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <p v-if="erroFiltro" style="color: red">
+        {{ erroFiltro }}
+      </p>
+    </div>
   </div>
 </template>
 
@@ -65,64 +95,87 @@
 export default {
   data() {
     return {
+      // US02 - Lista de Marinheiros
       marinheiros: [],
       mostrarTabela: false,
+
+      // US01 - Registo de Marinheiros
       novo: {
-        id_marinheiro: "",
-        nome: "",
-        idade: "",
-        classificacao: ""
-      }
+        id_marinheiro: '',
+        nome: '',
+        idade: '',
+        classificacao: '',
+      },
+
+      // US03 - Filtro por Classificação
+      filtroClassificacao: '',
+      marinheirosFiltrados: [],
+      erroFiltro: '',
     }
   },
 
   methods: {
+    // US02 - Lista de Marinheiros
     async toggle() {
       this.mostrarTabela = !this.mostrarTabela
 
       if (this.mostrarTabela && this.marinheiros.length === 0) {
-        const res = await fetch("http://localhost:8080/api/marinheiros")
+        const res = await fetch('http://localhost:8080/api/marinheiros')
         this.marinheiros = await res.json()
       }
     },
-
+    // US01 - Registo de Marinheiros
     async registarMarinheiro() {
-      const res = await fetch("http://localhost:8080/api/marinheiros", {
-        method: "POST",
+      const res = await fetch('http://localhost:8080/api/marinheiros', {
+        method: 'POST',
         headers: {
-          "Content-Type": "application/json"
+          'Content-Type': 'application/json',
         },
-        body: JSON.stringify(this.novo)
+        body: JSON.stringify(this.novo),
       })
 
       const texto = await res.text()
       console.log(texto)
 
       if (res.ok) {
-        alert("Marinheiro registado!")
+        alert('Marinheiro registado!')
 
         this.novo = {
-          id_marinheiro: "",
-          nome: "",
-          idade: "",
-          classificacao: ""
+          id_marinheiro: '',
+          nome: '',
+          idade: '',
+          classificacao: '',
         }
-
-      
       } else {
-        if (texto.includes("ORA-00001") || texto.toLowerCase().includes("unique")) {
-          alert("ID já existe")
+        if (texto.includes('ORA-00001') || texto.toLowerCase().includes('unique')) {
+          alert('ID já existe')
         } else {
-          alert("Erro ao registar")
+          alert('Erro ao registar')
         }
       }
     },
-
+    // Atualizar
     async atualizarLista() {
-      const res = await fetch("http://localhost:8080/api/marinheiros")
+      const res = await fetch('http://localhost:8080/api/marinheiros')
       this.marinheiros = await res.json()
-    }
-  }
+    },
+    // US03 - Filtro por Classificação
+    async listarPorClassificacao() {
+      this.erroFiltro = ''
+      this.marinheirosFiltrados = []
+
+      const res = await fetch(
+        `http://localhost:8080/api/marinheiros/classificacao?classificacao=${this.filtroClassificacao}`,
+      )
+
+      if (res.ok) {
+        this.marinheirosFiltrados = await res.json()
+      } else {
+        const erro = await res.json()
+        this.erroFiltro = erro.erro || 'Erro ao filtrar'
+      }
+    },
+  },
 }
 </script>
 
