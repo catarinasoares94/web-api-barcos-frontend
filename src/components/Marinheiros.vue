@@ -1,6 +1,6 @@
 <template>
   <div class="container">
-    <!-- US02 - LISTAR TODOS OS MARINHEIROS -->
+    <!-- US002 - LISTAR TODOS OS MARINHEIROS -->
 
     <div class="box">
       <h2>Ver Dados Pessoais dos Marinheiros</h2>
@@ -34,7 +34,7 @@
       </table>
     </div>
 
-    <!-- US01 REGISTAR MARINHEIRO -->
+    <!-- US001 REGISTAR MARINHEIRO -->
     <div class="box">
       <h2>Registar Utilizador como Marinheiro</h2>
 
@@ -54,6 +54,8 @@
         <button type="submit">Registar</button>
       </form>
     </div>
+
+    <!-- US003 LISTAR MARINHEIRO POR CLASSIFICAÇÃO -->
     <div class="box">
       <h2>Listar por Classificação</h2>
 
@@ -88,6 +90,41 @@
         {{ erroFiltro }}
       </p>
     </div>
+
+    <!-- US004 LISTAR INFO DE MARINHEIRO POR ID -->
+    <div class="box">
+      <h2>Mostrar Informação Detalhada sobre Marinheiro através do seu ID</h2>
+      <label>ID</label>
+      <input type="number" v-model="idPesquisa" placeholder="Ex: 30" />
+
+      <button @click="procurarPorId">Procurar</button>
+
+      <p></p>
+
+      <table v-if="marinheiroEncontrado.length > 0" border="1">
+        <thead>
+          <tr>
+            <th>ID</th>
+            <th>Nome</th>
+            <th>Classificação</th>
+            <th>Idade</th>
+          </tr>
+        </thead>
+
+        <tbody>
+          <tr v-for="m in marinheiroEncontrado" :key="m[0]">
+            <td>{{ m[0] }}</td>
+            <td>{{ m[1] }}</td>
+            <td>{{ m[2] }}</td>
+            <td>{{ m[3] }}</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <p v-if="erroId" style="color: red">
+        {{ erroId }}
+      </p>
+    </div>
   </div>
 </template>
 
@@ -95,11 +132,11 @@
 export default {
   data() {
     return {
-      // US02 - Lista de Marinheiros
+      // US002 - Lista de Marinheiros
       marinheiros: [],
       mostrarTabela: false,
 
-      // US01 - Registo de Marinheiros
+      // US001 - Registo de Marinheiros
       novo: {
         id_marinheiro: '',
         nome: '',
@@ -107,15 +144,20 @@ export default {
         classificacao: '',
       },
 
-      // US03 - Filtro por Classificação
+      // US003 - Filtro por Classificação
       filtroClassificacao: '',
       marinheirosFiltrados: [],
       erroFiltro: '',
+
+      // US004 - Filtro por ID
+      idPesquisa: '',
+      marinheiroEncontrado: [],
+      erroId: '',
     }
   },
 
   methods: {
-    // US02 - Lista de Marinheiros
+    // US002 - Lista de Marinheiros
     async toggle() {
       this.mostrarTabela = !this.mostrarTabela
 
@@ -124,7 +166,7 @@ export default {
         this.marinheiros = await res.json()
       }
     },
-    // US01 - Registo de Marinheiros
+    // US001 - Registo de Marinheiros
     async registarMarinheiro() {
       const res = await fetch('http://localhost:8080/api/marinheiros', {
         method: 'POST',
@@ -159,7 +201,7 @@ export default {
       const res = await fetch('http://localhost:8080/api/marinheiros')
       this.marinheiros = await res.json()
     },
-    // US03 - Filtro por Classificação
+    // US003 - Filtro por Classificação
     async listarPorClassificacao() {
       this.erroFiltro = ''
       this.marinheirosFiltrados = []
@@ -167,12 +209,25 @@ export default {
       const res = await fetch(
         `http://localhost:8080/api/marinheiros/classificacao?classificacao=${this.filtroClassificacao}`,
       )
-
+      // ERRO NÃO EXISTE MARINHEIRO COM ESSA CLASSIFICAÇÃO
       if (res.ok) {
         this.marinheirosFiltrados = await res.json()
       } else {
         const erro = await res.json()
-        this.erroFiltro = erro.erro || 'Erro ao filtrar'
+        this.erroFiltro = erro.erro || 'Nenhum Marinheiro com essa Classificação'
+      }
+    },
+    async procurarPorId() {
+      this.erroId = ''
+      this.marinheiroEncontrado = []
+
+      const res = await fetch(`http://localhost:8080/api/marinheiros/${this.idPesquisa}`)
+
+      if (res.ok) {
+        this.marinheiroEncontrado = await res.json()
+      } else {
+        const erro = await res.json()
+        this.erroId = erro.erro || 'Marinheiro não encontrado'
       }
     },
   },
