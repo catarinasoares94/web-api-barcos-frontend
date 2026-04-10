@@ -52,6 +52,25 @@
         </tbody>
       </table>
     </div>
+
+    <!-- US012 - CANCELAR RESERVA NO FUTURO ATRAVES DO SEU ID -->
+
+    <div class="box">
+      <h2>Cancelar Reserva</h2>
+
+      <form @submit.prevent="cancelarReservaForm" class="form">
+        <label>ID Marinheiro</label>
+        <input type="number" v-model="cancelar.id_marinheiro" required />
+
+        <label>ID Barco</label>
+        <input type="number" v-model="cancelar.id_barco" required />
+
+        <label>Data</label>
+        <input type="date" v-model="cancelar.data" required />
+
+        <button type="submit">Cancelar Reserva</button>
+      </form>
+    </div>
   </div>
   <!-- DIV DO CONTAINER -->
 </template>
@@ -71,6 +90,13 @@ export default {
       reservas: [],
       idPesquisa: '',
       mostrarReservas: false,
+
+      // US012 - Cancelar Reserva no Futuro Através do Seu ID
+      cancelar: {
+        id_marinheiro: '',
+        id_barco: '',
+        data: '',
+      },
     }
   },
 
@@ -111,7 +137,7 @@ export default {
             data: '',
           }
         } else {
-          // 🔹 usa diretamente a mensagem do backend
+          // Usa diretamente a mensagem do backend
           alert(dados.error || 'Erro ao criar reserva')
         }
       } catch (e) {
@@ -144,6 +170,53 @@ export default {
     formatarData(data) {
       const d = new Date(data)
       return d.toLocaleDateString()
+    },
+    // US012 - Cancelar Reserva no Futuro Através do Seu ID
+    async cancelarReservaForm() {
+      if (!this.cancelar.id_marinheiro || !this.cancelar.id_barco || !this.cancelar.data) {
+        alert('Preenche todos os campos')
+        return
+      }
+
+      const payload = {
+        id_marinheiro: Number(this.cancelar.id_marinheiro),
+        id_barco: Number(this.cancelar.id_barco),
+        data: this.cancelar.data, // YYYY-MM-DD → backend faz dataJS
+      }
+
+      try {
+        const res = await fetch('http://localhost:8080/api/reservas', {
+          method: 'DELETE',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(payload),
+        })
+
+        let dados = {}
+        try {
+          dados = await res.json()
+        } catch {}
+
+        if (res.ok) {
+          alert('Reserva cancelada com sucesso!')
+
+          this.cancelar = {
+            id_marinheiro: '',
+            id_barco: '',
+            data: '',
+          }
+
+          // opcional: atualizar lista se estiver visível
+          if (this.idPesquisa) {
+            this.listarReservas()
+          }
+        } else {
+          alert(dados.error || 'Erro ao cancelar reserva')
+        }
+      } catch (e) {
+        alert('Erro de ligação ao servidor')
+      }
     },
   },
 }
