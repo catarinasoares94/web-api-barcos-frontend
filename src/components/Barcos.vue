@@ -1,6 +1,7 @@
 <template>
   <div class="container">
     <!-- US008 - LISTAR TODOS OS BARCOS REGISTADOS NO SISTEMA -->
+
     <div class="box">
       <h2>Ver Todos os Barcos Registados no Sistema</h2>
 
@@ -49,6 +50,33 @@
         <button type="submit">Registar</button>
       </form>
     </div>
+
+    <!-- US009 - LISTAR TODOS OS BARCOS DISPONIVEIS PARA RESERVA -->
+    <div class="box">
+      <h2>Barcos Disponiveis para Reserva</h2>
+
+      <button @click="toggleDisponiveis">
+        {{ mostrarDisponiveis ? 'Esconder' : 'Listar Disponiveis' }}
+      </button>
+
+      <table v-if="mostrarDisponiveis && barcosDisponiveis.length > 0">
+        <thead>
+          <tr>
+            <th>ID</th>
+            <th>Nome</th>
+            <th>Cor</th>
+          </tr>
+        </thead>
+
+        <tbody>
+          <tr v-for="b in barcosDisponiveis" :key="b[0]">
+            <td>{{ b[0] }}</td>
+            <td>{{ b[1] }}</td>
+            <td>{{ b[2] }}</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
   </div>
   <!-- DIV DO CONTAINER -->
 </template>
@@ -67,6 +95,10 @@ export default {
         nome: '',
         cor: '',
       },
+
+      // US009 - Lista de barcos Disponiveis para Reserva
+      barcosDisponiveis: [],
+      mostrarDisponiveis: false,
     }
   },
 
@@ -116,6 +148,25 @@ export default {
     async atualizarLista() {
       const res = await fetch('http://localhost:8080/api/barcos')
       this.barcos = await res.json()
+    },
+
+    // US009 - Lista de barcos Disponiveis para Reserva
+    async toggleDisponiveis() {
+      this.mostrarDisponiveis = !this.mostrarDisponiveis
+
+      if (this.mostrarDisponiveis && this.barcosDisponiveis.length === 0) {
+        const res = await fetch('http://localhost:8080/api/barcos/disponiveis')
+        const dados = await res.json()
+
+        if (res.ok) {
+          this.barcosDisponiveis = dados
+        } else {
+          this.barcosDisponiveis = []
+          alert(dados.error || 'Nenhum barco disponível')
+        }
+      } else {
+        this.barcosDisponiveis = []
+      }
     },
   },
 }
