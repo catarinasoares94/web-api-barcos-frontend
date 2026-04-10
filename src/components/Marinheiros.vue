@@ -1,7 +1,6 @@
 <template>
   <div class="container">
     <!-- US002 - LISTAR TODOS OS MARINHEIROS -->
-
     <div class="box">
       <h2>Ver Dados Pessoais dos Marinheiros</h2>
 
@@ -13,7 +12,7 @@
 
       <p></p>
 
-      <table v-if="mostrarTabela && marinheiros.length > 0" >
+      <table v-if="mostrarTabela && marinheiros.length > 0">
         <thead>
           <tr>
             <th>ID</th>
@@ -66,7 +65,7 @@
 
       <p></p>
 
-      <table v-if="marinheirosFiltrados.length > 0" >
+      <table v-if="marinheirosFiltrados.length > 0">
         <thead>
           <tr>
             <th>ID</th>
@@ -101,7 +100,7 @@
 
       <p></p>
 
-      <table v-if="marinheiroEncontrado.length > 0" >
+      <table v-if="marinheiroEncontrado.length > 0">
         <thead>
           <tr>
             <th>ID</th>
@@ -126,45 +125,45 @@
       </p>
     </div>
 
-  <!-- US005 - UPDATE DE CLASSIFICAÇAO ATRAVES DE ID -->
-  <div class="box">
-    <h2>Atualizar Classificação do Marinheiro</h2>
+    <!-- US005 - UPDATE DE CLASSIFICAÇAO ATRAVES DE ID -->
+    <div class="box">
+      <h2>Atualizar Classificação do Marinheiro</h2>
 
-    <label>ID</label>
-    <input type="number" v-model="update.id" placeholder="Ex: 100" />
+      <label>ID</label>
+      <input type="number" v-model="update.id" placeholder="Ex: 100" />
 
-    <label>Nova Classificação</label>
-    <input type="number" v-model="update.classificacao" placeholder="Ex: 8" />
+      <label>Nova Classificação</label>
+      <input type="number" v-model="update.classificacao" placeholder="Ex: 8" />
 
-    <button @click="atualizarClassificacao">Atualizar</button>
+      <button @click="atualizarClassificacao">Atualizar</button>
 
-    <p v-if="mensagemUpdate" style="color: green">
-      {{ mensagemUpdate }}
-    </p>
+      <p v-if="mensagemUpdate" style="color: green">
+        {{ mensagemUpdate }}
+      </p>
 
-    <p v-if="erroUpdate" style="color: red">
-      {{ erroUpdate }}
-    </p>
-  </div>
+      <p v-if="erroUpdate" style="color: red">
+        {{ erroUpdate }}
+      </p>
+    </div>
 
-  <!-- US006 - ELIMINAR MARINHEIRO (SEM RESERVA ASSOCIADA OBRIGATORIO) -->
-  <div class="box">
-    <h2>Eliminar Marinheiro</h2>
+    <!-- US006 - ELIMINAR MARINHEIRO (SEM RESERVA ASSOCIADA OBRIGATORIO) -->
+    <div class="box">
+      <h2>Eliminar Marinheiro</h2>
 
-    <label>ID</label>
-    <input type="number" v-model="idDelete" placeholder="Ex: 100" />
+      <label>ID</label>
+      <input type="number" v-model="idDelete" placeholder="Ex: 100" />
 
-    <button @click="eliminarMarinheiro">Eliminar</button>
+      <button @click="eliminarMarinheiro">Eliminar</button>
 
-    <p v-if="mensagemDelete" style="color: green">
-      {{ mensagemDelete }}
-    </p>
+      <p v-if="mensagemDelete" style="color: green">
+        {{ mensagemDelete }}
+      </p>
 
-    <p v-if="erroDelete" style="color: red">
-      {{ erroDelete }}
-    </p>
-  </div>
-  </div>
+      <p v-if="erroDelete" style="color: red">
+        {{ erroDelete }}
+      </p>
+    </div>
+  </div> <!-- DIV DO CONTAINER -->
 </template>
 
 <script>
@@ -357,9 +356,9 @@ export default {
 <style>
 .container {
   display: flex;
-  flex-direction: column; 
-  gap: 40px;              
-  max-width: 600px;           
+  flex-direction: column;
+  gap: 40px;
+  max-width: 600px;
   margin: 20px 0 20px 40px;
 }
 
@@ -374,7 +373,9 @@ export default {
   flex-direction: column;
   gap: 12px;
 
-  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  transition:
+    transform 0.2s ease,
+    box-shadow 0.2s ease;
 
   max-width: 350px;
   width: 100%;
@@ -383,7 +384,7 @@ export default {
 
 .box:hover {
   transform: translateY(-3px);
-  box-shadow: 0 8px 20px rgba(0,0,0,0.08);
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.08);
 }
 
 .box h2 {
@@ -392,8 +393,6 @@ export default {
   border-bottom: 2px solid #f1f1f1;
   padding-bottom: 5px;
 }
-
-
 
 .form {
   display: flex;
@@ -446,7 +445,8 @@ th {
   background: #f5f5f5;
 }
 
-th, td {
+th,
+td {
   padding: 8px;
   border: 1px solid #ddd;
   text-align: center;
@@ -465,5 +465,4 @@ th, td {
 body {
   background: #f4f6f9;
 }
-
 </style>

@@ -1,5 +1,5 @@
 <template>
- <header class="navbar">
+  <header class="navbar">
     <h1>UPSKILL BARCOS</h1>
 
     <nav>
