@@ -18,6 +18,40 @@
         <button type="submit">Reservar</button>
       </form>
     </div>
+
+    <!-- US011 - LISTAR RESERVAS ATRAVES DO ID DO MARINHEIRO -->
+
+    <div class="box">
+      <h2>Minhas Reservas</h2>
+
+      <input type="number" v-model="idPesquisa" placeholder="ID do Marinheiro" />
+
+      <button @click="listarReservas">Listar Reservas</button>
+
+      <table v-if="mostrarReservas && reservas.length > 0">
+        <p v-if="reservas.length > 0">
+          <strong>Marinheiro:</strong> {{ reservas[0].NOME_MARINHEIRO }} (ID:
+          {{ reservas[0].ID_MARINHEIRO }})
+        </p>
+        <thead>
+          <tr>
+            <th>ID Barco</th>
+            <th>Nome Barco</th>
+            <th>Cor</th>
+            <th>Data</th>
+          </tr>
+        </thead>
+
+        <tbody>
+          <tr v-for="r in reservas" :key="r.ID_BARCO + r.DATA">
+            <td>{{ r.ID_BARCO }}</td>
+            <td>{{ r.NOME_BARCO }}</td>
+            <td>{{ r.COR }}</td>
+            <td>{{ formatarData(r.DATA) }}</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
   </div>
   <!-- DIV DO CONTAINER -->
 </template>
@@ -26,15 +60,22 @@
 export default {
   data() {
     return {
+      // US010 - Reservar Barco
       reserva: {
         id_marinheiro: '',
         id_barco: '',
         data: '', // usar input type="date" → YYYY-MM-DD
       },
+
+      // US011 - Listar Reserva Através de ID de Marinheiro
+      reservas: [],
+      idPesquisa: '',
+      mostrarReservas: false,
     }
   },
 
   methods: {
+    // US010 - Reservar Barco
     async reservarBarco() {
       if (!this.reserva.id_marinheiro || !this.reserva.id_barco || !this.reserva.data) {
         alert('Preenche todos os campos')
@@ -76,6 +117,33 @@ export default {
       } catch (e) {
         alert('Erro de ligação ao servidor')
       }
+    },
+    // US011 - Listar Reserva Através de ID de Marinheiro
+    async listarReservas() {
+      if (!this.idPesquisa) {
+        alert('Indica o ID do marinheiro')
+        return
+      }
+
+      const res = await fetch(`http://localhost:8080/api/reservas/marinheiro/${this.idPesquisa}`)
+
+      let dados = {}
+      try {
+        dados = await res.json()
+      } catch {}
+
+      if (res.ok) {
+        this.reservas = dados
+        this.mostrarReservas = true
+      } else {
+        this.reservas = []
+        this.mostrarReservas = false
+        alert(dados.error || 'Erro ao listar reservas')
+      }
+    },
+    formatarData(data) {
+      const d = new Date(data)
+      return d.toLocaleDateString()
     },
   },
 }
