@@ -3,9 +3,9 @@
     <h1>UPSKILL BARCOS</h1>
 
     <nav>
-      <router-link to="/marinheiros">Gestão de Marinheiros</router-link>
-      <router-link to="/barcos">Gestão de Barcos</router-link>
-      <router-link to="/reservas">Gestão de Reservas</router-link>
+      <router-link to="/marinheiros">Gestão de Marinheiros (Sou Gestor)</router-link>
+      <router-link to="/barcos">Gestão de Barcos (Sou Gestor)</router-link>
+      <router-link to="/reservas">Gestão de Reservas (Sou Marinheiro)</router-link>
     </nav>
   </header>
 
