@@ -115,7 +115,7 @@ export default {
       }
 
       try {
-        const res = await fetch('http://localhost:8080/api/reservas', {
+        const res = await fetch('/api/reservas', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
@@ -151,7 +151,7 @@ export default {
         return
       }
 
-      const res = await fetch(`http://localhost:8080/api/reservas/marinheiro/${this.idPesquisa}`)
+      const res = await fetch(`/api/reservas/marinheiro/${this.idPesquisa}`)
 
       let dados = {}
       try {
@@ -185,7 +185,7 @@ export default {
       }
 
       try {
-        const res = await fetch('http://localhost:8080/api/reservas', {
+        const res = await fetch('/api/reservas', {
           method: 'DELETE',
           headers: {
             'Content-Type': 'application/json',

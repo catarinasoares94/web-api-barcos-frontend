@@ -213,7 +213,7 @@ export default {
       this.mostrarTabela = !this.mostrarTabela
 
       if (this.mostrarTabela && this.marinheiros.length === 0) {
-        const res = await fetch('http://localhost:8080/api/marinheiros')
+        const res = await fetch('/api/marinheiros')
         this.marinheiros = await res.json()
       } else {
         this.marinheiros = []
@@ -221,7 +221,7 @@ export default {
     },
     // US001 - Registo de Marinheiros
     async registarMarinheiro() {
-      const res = await fetch('http://localhost:8080/api/marinheiros', {
+      const res = await fetch('/api/marinheiros', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -251,7 +251,7 @@ export default {
     },
     // Atualizar
     async atualizarLista() {
-      const res = await fetch('http://localhost:8080/api/marinheiros')
+      const res = await fetch('/api/marinheiros')
       this.marinheiros = await res.json()
     },
     // US003 - Filtro por Classificação
@@ -260,7 +260,7 @@ export default {
       this.marinheirosFiltrados = []
 
       const res = await fetch(
-        `http://localhost:8080/api/marinheiros/classificacao?classificacao=${this.filtroClassificacao}`,
+        `api/marinheiros/classificacao?classificacao=${this.filtroClassificacao}`,
       )
       // ERRO NÃO EXISTE MARINHEIRO COM ESSA CLASSIFICAÇÃO
       if (res.ok) {
@@ -275,7 +275,7 @@ export default {
       this.erroId = ''
       this.marinheiroEncontrado = []
 
-      const res = await fetch(`http://localhost:8080/api/marinheiros/${this.idPesquisa}`)
+      const res = await fetch(`api/marinheiros/${this.idPesquisa}`)
 
       if (res.ok) {
         this.marinheiroEncontrado = await res.json()
@@ -295,7 +295,7 @@ export default {
       }
 
       try {
-        const res = await fetch(`http://localhost:8080/api/marinheiros/${this.update.id}`, {
+        const res = await fetch(`api/marinheiros/${this.update.id}`, {
           method: 'PATCH',
           headers: {
             'Content-Type': 'application/json',
@@ -331,7 +331,7 @@ export default {
       }
 
       try {
-        const res = await fetch(`http://localhost:8080/api/marinheiros/${this.idDelete}`, {
+        const res = await fetch(`/api/marinheiros/${this.idDelete}`, {
           method: 'DELETE',
         })
 

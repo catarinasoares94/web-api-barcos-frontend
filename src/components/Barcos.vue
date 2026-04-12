@@ -108,7 +108,7 @@ export default {
       this.mostrarTabela = !this.mostrarTabela
 
       if (this.mostrarTabela && this.barcos.length === 0) {
-        const res = await fetch('http://localhost:8080/api/barcos')
+        const res = await fetch('/api/barcos')
         this.barcos = await res.json()
       } else {
         this.barcos = []
@@ -117,7 +117,7 @@ export default {
 
     // US007 - Registo de Barco
     async registarBarco() {
-      const res = await fetch('http://localhost:8080/api/barcos', {
+      const res = await fetch('/api/barcos', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -146,7 +146,7 @@ export default {
     },
     // Atualizar
     async atualizarLista() {
-      const res = await fetch('http://localhost:8080/api/barcos')
+      const res = await fetch('/api/barcos')
       this.barcos = await res.json()
     },
 
@@ -155,7 +155,7 @@ export default {
       this.mostrarDisponiveis = !this.mostrarDisponiveis
 
       if (this.mostrarDisponiveis && this.barcosDisponiveis.length === 0) {
-        const res = await fetch('http://localhost:8080/api/barcos/disponiveis')
+        const res = await fetch('/api/barcos/disponiveis')
         const dados = await res.json()
 
         if (res.ok) {
