@@ -1,50 +1,76 @@
 <template>
-  <header class="navbar">
-    <h1>UPSKILL BARCOS</h1>
+  <!-- NAVBAR (escondida na Home) -->
+  <header v-if="$route.path !== '/'" class="navbar">
+    <div class="logo">
+      ⚓ GESTOR
+    </div>
 
-    <nav>
-      <router-link to="/marinheiros">Gestão de Marinheiros (Sou Gestor)</router-link>
-      <router-link to="/barcos">Gestão de Barcos (Sou Gestor)</router-link>
-      <router-link to="/reservas">Gestão de Reservas (Sou Marinheiro)</router-link>
+    <nav class="nav-links">
+      <router-link to="/">Home</router-link>
+      <router-link to="/marinheiros">Marinheiros</router-link>
+      <router-link to="/barcos">Barcos</router-link>
+      <router-link to="/reservas">Reservas</router-link>
     </nav>
   </header>
 
-  <main>
+  <!-- CONTEÚDO -->
+  <main :class="{ 'no-padding': $route.path === '/' }">
     <router-view></router-view>
   </main>
 </template>
 
-<style scoped>
+<style scoped> 
+/* NAVBAR */
 .navbar {
   display: flex;
   justify-content: space-between;
   align-items: center;
 
-  background-color: black;
+  padding: 15px 40px;
+
+  background: linear-gradient(90deg, #0f2027, #203a43, #2c5364);
   color: white;
 
-  padding: 15px 20px;
+  box-shadow: 0 4px 10px rgba(0,0,0,0.3);
 }
 
-h1 {
-  margin: 0;
-  font-size: 20px;
+/* LOGO */
+.logo {
+  font-size: 22px;
+  font-weight: bold;
 }
 
-nav a {
+/* LINKS */
+.nav-links a {
   color: white;
   text-decoration: none;
-  margin-left: 15px;
-  padding: 6px 10px;
-  border-radius: 5px;
+  margin-left: 20px;
+
+  padding: 8px 14px;
+  border-radius: 8px;
+
+  transition: 0.3s;
 }
 
-nav a:hover,
+.nav-links a:hover {
+  background-color: rgba(22, 162, 223, 0.15);
+}
+
+/* LINK ATIVO */
 .router-link-active {
-  background-color: rgb(110, 79, 13);
+  background-color: #ff9800;
+  color: white;
 }
 
+/* MAIN */
 main {
-  padding: 20px;
+  padding: 30px;
+  background-color: #f4f7fa;
+  min-height: 100vh;
+}
+
+/* HOME sem padding (full width) */
+.no-padding {
+  padding: 0;
 }
 </style>
