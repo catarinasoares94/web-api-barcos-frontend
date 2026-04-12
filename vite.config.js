@@ -16,7 +16,7 @@ export default defineConfig({
     host: true,
     proxy: {
       '/api': {
-        target: 'http://192.168.137.1:8080',
+        target: 'http://localhost:8080',
         changeOrigin: true, // adicionei isto para conseguir ver no tablet como "monitor externo"
       },
     },
