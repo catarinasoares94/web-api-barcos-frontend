@@ -1,175 +1,121 @@
 <template>
-  <div class="container">
-    <!-- US002 - LISTAR TODOS OS MARINHEIROS -->
-    <div class="box">
-      <h2>Ver Dados Pessoais dos Marinheiros</h2>
+  <div class="page">
+    <!-- ESQUERDA -->
+    <div class="main">
+      <!-- HEADER -->
+      <div class="header-box">
+        <h1>Marinheiros</h1>
+      </div>
 
-      <button @click="toggle">
-        {{ mostrarTabela ? 'Esconder Marinheiros' : 'Listar Marinheiros' }}
-      </button>
+      <!-- TABELA -->
+      <div class="table-box" v-show="activeBox === 'listar'">
+        <button class="refresh" @click="atualizarLista">Atualizar</button>
 
-      <button @click="atualizarLista" v-if="mostrarTabela">Atualizar Lista</button>
+        <table>
+          <thead>
+            <tr>
+              <th>ID</th>
+              <th>Nome</th>
+              <th>Classificação</th>
+              <th>Idade</th>
+            </tr>
+          </thead>
 
-      <p></p>
+          <tbody>
+            <tr v-for="m in marinheirosPaginados" :key="m[0]">
+              <td>{{ m[0] }}</td>
+              <td>{{ m[1] }}</td>
+              <td>{{ m[2] }}</td>
+              <td>{{ m[3] }}</td>
+            </tr>
+          </tbody>
+        </table>
 
-      <table v-if="mostrarTabela && marinheiros.length > 0">
-        <thead>
-          <tr>
-            <th>ID</th>
-            <th>Nome</th>
-            <th>Classificação</th>
-            <th>Idade</th>
-          </tr>
-        </thead>
+        <div class="pagination" v-if="totalPages > 1">
+          <button @click="currentPage--" :disabled="currentPage === 1">Anterior</button>
 
-        <tbody>
-          <tr v-for="m in marinheiros" :key="m[0]">
-            <td>{{ m[0] }}</td>
-            <td>{{ m[1] }}</td>
-            <td>{{ m[2] }}</td>
-            <td>{{ m[3] }}</td>
-          </tr>
-        </tbody>
-      </table>
+          <span>Página {{ currentPage }} de {{ totalPages }}</span>
+
+          <button @click="currentPage++" :disabled="currentPage === totalPages">Seguinte</button>
+        </div>
+      </div>
+
+      <!-- FORMS DINÂMICOS -->
+      <div class="forms-area">
+        <!-- US001 REGISTAR MARINHEIRO -->
+        <div v-show="activeBox === 'registar'" class="card">
+          <h3>Registar</h3>
+
+          <input v-model="novo.id_marinheiro" placeholder="ID" />
+          <input v-model="novo.nome" placeholder="Nome" />
+          <input v-model="novo.idade" placeholder="Idade" />
+          <input v-model="novo.classificacao" placeholder="Classificação" />
+
+          <button class="primary" @click="registarMarinheiro">Registar</button>
+        </div>
+
+        <!-- US003 LISTAR MARINHEIRO POR CLASSIFICAÇÃO -->
+        <div v-show="activeBox === 'filtro'" class="card">
+          <h3>Filtrar por Classificação</h3>
+
+          <input v-model="filtroClassificacao" placeholder="Ex: 5" />
+          <button @click="listarPorClassificacao">Filtrar</button>
+        </div>
+
+        <!-- US004 LISTAR INFO DE MARINHEIRO POR ID -->
+        <div v-show="activeBox === 'procurar'" class="card">
+          <h3>Procurar por ID</h3>
+
+          <input v-model="idPesquisa" placeholder="ID" />
+          <button @click="procurarPorId">Procurar</button>
+        </div>
+
+        <!-- US005 - UPDATE -->
+        <div v-show="activeBox === 'update'" class="card">
+          <h3>Atualizar Classificação</h3>
+
+          <input v-model="update.id" placeholder="ID" />
+          <input v-model="update.classificacao" placeholder="Nova classificação" />
+
+          <button @click="atualizarClassificacao">Atualizar</button>
+        </div>
+
+        <!-- US006 - ELIMINAR -->
+        <div v-show="activeBox === 'delete'" class="card danger">
+          <h3>Eliminar</h3>
+
+          <input v-model="idDelete" placeholder="ID" />
+          <button @click="eliminarMarinheiro">Eliminar</button>
+        </div>
+      </div>
     </div>
 
-    <!-- US001 REGISTAR MARINHEIRO -->
-    <div class="box">
-      <h2>Registar Utilizador como Marinheiro</h2>
+    <!-- DIREITA -->
+    <div class="sidebar">
+      <button @click="toggleBox('listar')">Listar Marinheiros</button>
 
-      <form @submit.prevent="registarMarinheiro" class="form">
-        <label>ID</label>
-        <input type="number" v-model="novo.id_marinheiro" placeholder="ID" required />
+      <button @click="toggleBox('registar')">Registar Marinheiro</button>
 
-        <label>Nome</label>
-        <input type="text" v-model="novo.nome" placeholder="Nome" required />
+      <button @click="toggleBox('filtro')">Filtrar por Classificação</button>
 
-        <label>Idade</label>
-        <input type="number" v-model="novo.idade" placeholder="Idade" required />
+      <button @click="toggleBox('procurar')">Procurar por ID</button>
 
-        <label>Classificação</label>
-        <input type="number" v-model="novo.classificacao" placeholder="Classificação" required />
+      <button @click="toggleBox('update')">Atualizar Classificação</button>
 
-        <button type="submit">Registar</button>
-      </form>
+      <button class="danger" @click="toggleBox('delete')">Eliminar Marinheiro</button>
     </div>
-
-    <!-- US003 LISTAR MARINHEIRO POR CLASSIFICAÇÃO -->
-    <div class="box">
-      <h2>Listar por Classificação</h2>
-
-      <label>Classificação</label>
-      <input type="number" v-model="filtroClassificacao" placeholder="Ex: 10" />
-
-      <button @click="listarPorClassificacao">Filtrar</button>
-
-      <p></p>
-
-      <table v-if="marinheirosFiltrados.length > 0">
-        <thead>
-          <tr>
-            <th>ID</th>
-            <th>Nome</th>
-            <th>Classificação</th>
-            <th>Idade</th>
-          </tr>
-        </thead>
-
-        <tbody>
-          <tr v-for="m in marinheirosFiltrados" :key="m[0]">
-            <td>{{ m[0] }}</td>
-            <td>{{ m[1] }}</td>
-            <td>{{ m[2] }}</td>
-            <td>{{ m[3] }}</td>
-          </tr>
-        </tbody>
-      </table>
-
-      <p v-if="erroFiltro" style="color: red">
-        {{ erroFiltro }}
-      </p>
-    </div>
-
-    <!-- US004 LISTAR INFO DE MARINHEIRO POR ID -->
-    <div class="box">
-      <h2>Mostrar Informação Detalhada sobre Marinheiro através do seu ID</h2>
-      <label>ID</label>
-      <input type="number" v-model="idPesquisa" placeholder="Ex: 30" />
-
-      <button @click="procurarPorId">Procurar</button>
-
-      <p></p>
-
-      <table v-if="marinheiroEncontrado.length > 0">
-        <thead>
-          <tr>
-            <th>ID</th>
-            <th>Nome</th>
-            <th>Classificação</th>
-            <th>Idade</th>
-          </tr>
-        </thead>
-
-        <tbody>
-          <tr v-for="m in marinheiroEncontrado" :key="m[0]">
-            <td>{{ m[0] }}</td>
-            <td>{{ m[1] }}</td>
-            <td>{{ m[2] }}</td>
-            <td>{{ m[3] }}</td>
-          </tr>
-        </tbody>
-      </table>
-
-      <p v-if="erroId" style="color: red">
-        {{ erroId }}
-      </p>
-    </div>
-
-    <!-- US005 - UPDATE DE CLASSIFICAÇAO ATRAVES DE ID -->
-    <div class="box">
-      <h2>Atualizar Classificação do Marinheiro</h2>
-
-      <label>ID</label>
-      <input type="number" v-model="update.id" placeholder="Ex: 100" />
-
-      <label>Nova Classificação</label>
-      <input type="number" v-model="update.classificacao" placeholder="Ex: 8" />
-
-      <button @click="atualizarClassificacao">Atualizar</button>
-
-      <p v-if="mensagemUpdate" style="color: green">
-        {{ mensagemUpdate }}
-      </p>
-
-      <p v-if="erroUpdate" style="color: red">
-        {{ erroUpdate }}
-      </p>
-    </div>
-
-    <!-- US006 - ELIMINAR MARINHEIRO (SEM RESERVA ASSOCIADA OBRIGATORIO) -->
-    <div class="box">
-      <h2>Eliminar Marinheiro</h2>
-
-      <label>ID</label>
-      <input type="number" v-model="idDelete" placeholder="Ex: 100" />
-
-      <button @click="eliminarMarinheiro">Eliminar</button>
-
-      <p v-if="mensagemDelete" style="color: green">
-        {{ mensagemDelete }}
-      </p>
-
-      <p v-if="erroDelete" style="color: red">
-        {{ erroDelete }}
-      </p>
-    </div>
-  </div> <!-- DIV DO CONTAINER -->
+  </div>
 </template>
 
 <script>
 export default {
   data() {
     return {
+      activeBox: 'listar',
+
+      currentPage: 1,
+      itemsPerPage: 10,
+
       // US002 - Lista de Marinheiros
       marinheiros: [],
       mostrarTabela: false,
@@ -207,7 +153,38 @@ export default {
     }
   },
 
+  mounted() {
+    this.atualizarLista()
+    this.currentPage = 1
+  },
+
+  computed: {
+    marinheirosPaginados() {
+      const start = (this.currentPage - 1) * this.itemsPerPage
+      return this.marinheiros.slice(start, start + this.itemsPerPage)
+    },
+
+    totalPages() {
+      return Math.ceil(this.marinheiros.length / this.itemsPerPage)
+    },
+  },
+
+  watch: {
+    marinheiros() {
+      this.currentPage = 1
+    },
+  },
+
   methods: {
+    toggleBox(box) {
+      if (this.activeBox === box) {
+        this.activeBox = null
+      } else {
+        this.activeBox = box
+        this.mostrarTabela = false
+      }
+    },
+
     // US002 - Lista de Marinheiros
     async toggle() {
       this.mostrarTabela = !this.mostrarTabela
@@ -354,115 +331,145 @@ export default {
 </script>
 
 <style>
-.container {
+.pagination {
+  margin-top: 15px;
   display: flex;
-  flex-direction: column;
-  gap: 40px;
-  max-width: 600px;
-  margin: 20px 0 20px 40px;
+  justify-content: center;
+  gap: 15px;
 }
 
-.box {
-  background: #ffffff;
-  border-radius: 14px;
-  padding: 25px;
-  box-shadow: 0 8px 20px rgba(192, 26, 26, 0.08);
-  border: 1px solid #ddd;
-
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-
-  transition:
-    transform 0.2s ease,
-    box-shadow 0.2s ease;
-
-  max-width: 350px;
-  width: 100%;
-  margin-bottom: 5px;
-}
-
-.box:hover {
-  transform: translateY(-3px);
-  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.08);
-}
-
-.box h2 {
-  font-size: 18px;
-  margin-bottom: 10px;
-  border-bottom: 2px solid #f1f1f1;
-  padding-bottom: 5px;
-}
-
-.form {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-}
-
-input {
-  width: 100%;
-  box-sizing: border-box;
-  width: 100%;
-  padding: 8px;
+.pagination button {
+  padding: 8px 12px;
   border-radius: 6px;
-  border: 1px solid #ccc;
-  outline: none;
-}
-
-input:focus {
-  border-color: #007bff;
-  padding: 6px;
-  border: 1px solid #999;
-}
-
-label {
-  margin-top: 10px;
-  display: block;
-}
-
-button {
-  background: #007bff;
-  color: white;
   border: none;
-  padding: 8px;
-  border-radius: 6px;
+  background: #2c5364;
+  color: white;
   cursor: pointer;
-  transition: 0.2s;
 }
 
-button:hover {
-  background: #0056b3;
+.pagination button:disabled {
+  background: #ccc;
+  cursor: not-allowed;
+}
+
+.page {
+  display: flex;
+  gap: 30px;
+  padding: 30px;
+  align-items: center;
+}
+
+/* ESQUERDA */
+.main {
+  flex: 3;
+}
+
+/* HEADER */
+.header-box {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+
+  margin-bottom: 20px;
+}
+
+.header-box h1 {
+  font-size: 28px;
+}
+
+/* TABELA */
+.table-box {
+  background: white;
+  padding: 20px;
+  border-radius: 12px;
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+}
+
+.refresh {
+  margin-bottom: 10px;
 }
 
 table {
   width: 100%;
   border-collapse: collapse;
-  margin-top: 10px;
 }
 
 th {
-  background: #f5f5f5;
+  background: #f4f4f4;
 }
 
 th,
 td {
-  padding: 8px;
-  border: 1px solid #ddd;
+  padding: 10px;
   text-align: center;
+  border-bottom: 1px solid #eee;
 }
 
-.sucesso {
-  color: #2e7d32;
-  font-weight: 500;
+/* SIDEBAR */
+.sidebar {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+
+  gap: 40px;
+
+  height: 100%;
 }
 
-.erro {
-  color: #c62828;
-  font-weight: 500;
+/* CARDS */
+.card {
+  background: white;
+  padding: 20px;
+  border-radius: 12px;
+
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
 }
 
-body {
-  background: #f4f6f9;
+.card h3 {
+  margin-bottom: 10px;
+}
+
+/* INPUTS */
+input {
+  padding: 8px;
+  border-radius: 6px;
+  border: 1px solid #ccc;
+}
+
+/* BOTÕES */
+button {
+  background: #2c5364;
+  color: white;
+  border: none;
+  padding: 10px;
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+button:hover {
+  background: #203a43;
+}
+
+/* BOTÃO PRINCIPAL */
+.primary {
+  background: #ff9800;
+}
+
+.primary:hover {
+  background: #e68900;
+}
+
+/* DELETE */
+.danger button {
+  background: #c62828;
+}
+
+.danger button:hover {
+  background: #a61b1b;
 }
 </style>
