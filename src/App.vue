@@ -2,7 +2,7 @@
   <!-- NAVBAR (escondida na Home) -->
   <header v-if="$route.path !== '/'" class="navbar">
     <div class="logo">
-      ⚓ GESTOR
+      ⚓ {{ $route.path.includes('reservas') ? 'MARINHEIRO' : 'GESTOR' }}
     </div>
 
     <nav class="nav-links">
