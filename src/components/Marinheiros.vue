@@ -4,8 +4,6 @@
     <div class="main">
       <!-- TABELA -->
       <div class="table-box" v-if="activeBox === 'listar'">
-        <button class="refresh" @click="atualizarLista">Atualizar</button>
-
         <table>
           <thead>
             <tr>
@@ -50,7 +48,7 @@
         <div v-if="activeBox === 'filtro'" class="card">
           <h3>Filtrar por Classificação</h3>
 
-          <input v-model="filtroClassificacao" placeholder="Ex: 5" />
+          <input v-model="filtroClassificacao" placeholder="Ex: 5 (Entre 1 e 10)" />
           <button @click="listarPorClassificacao">Filtrar</button>
 
           <!-- RESULTADOS -->
@@ -108,7 +106,7 @@
           <p v-if="erroId">{{ erroId }}</p>
         </div>
 
-        <!-- US005 - UPDATE -->
+        <!-- US005 - UPDATE DE CLASSIFICAÇAO ATRAVES DE ID -->
         <div v-if="activeBox === 'update'" class="card">
           <h3>Atualizar Classificação</h3>
 
@@ -121,7 +119,7 @@
           <p v-if="erroUpdate">{{ erroUpdate }}</p>
         </div>
 
-        <!-- US006 - ELIMINAR -->
+        <!-- US006 - ELIMINAR MARINHEIRO (SEM RESERVA ASSOCIADA OBRIGATORIO) -->
         <div v-if="activeBox === 'delete'" class="card danger">
           <h3>Eliminar</h3>
 
@@ -192,7 +190,6 @@ export default {
   },
 
   mounted() {
-    console.log('MONTADO')
     this.atualizarLista()
   },
 
@@ -230,21 +227,56 @@ export default {
 
     // US001 - Registo de Marinheiros
     async registarMarinheiro() {
-      const res = await fetch('/api/marinheiros', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(this.novo),
-      })
+      const nomeRegex = /^[A-Za-zÀ-ÿ\s]+$/
 
-      if (res.ok) {
-        alert('Marinheiro registado!')
-        this.atualizarLista()
-      } else {
-        alert('Erro ao registar')
+      if (!nomeRegex.test(this.novo.nome)) {
+        alert('Nome inválido. Use apenas letras.')
+        return
+      }
+
+      // Validação da idade
+      const idadeNum = Number(this.novo.idade)
+
+      if (!Number.isInteger(idadeNum) || idadeNum < 1 || idadeNum > 100) {
+        alert('Idade deve ser um número inteiro entre 1 e 100.')
+        return
+      }
+
+      try {
+        const res = await fetch('/api/marinheiros', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(this.novo),
+        })
+
+        let data
+
+        try {
+          data = await res.json()
+        } catch {
+          data = null
+        }
+
+        if (res.ok) {
+          alert(data?.message || 'Marinheiro registado!')
+          this.atualizarLista()
+
+          this.novo = {
+            id_marinheiro: '',
+            nome: '',
+            classificacao: '',
+            idade: '',
+          }
+        } else {
+          alert(data?.error || 'Erro ao registar marinheiro.')
+        }
+      } catch (err) {
+        console.error(err)
+        alert('Erro de ligação ao servidor.')
       }
     },
 
-    // US003
+    // US003 - Filtro por Classificação
     async listarPorClassificacao() {
       this.erroFiltro = ''
       this.marinheirosFiltrados = []
@@ -263,7 +295,7 @@ export default {
       }
     },
 
-    // US004
+    // US004 - Filtro por ID
     async procurarPorId() {
       this.erroId = ''
       this.marinheiroEncontrado = []
@@ -280,27 +312,50 @@ export default {
       }
     },
 
-    // US005
+    // US005 UPDATE
     async atualizarClassificacao() {
-      const res = await fetch(`/api/marinheiros/${this.update.id}`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          classificacao: this.update.classificacao,
-        }),
-      })
+      const classNum = Number(this.update.classificacao)
 
-      const data = await res.json()
+      // ✔️ validação antes do fetch
+      if (!Number.isInteger(classNum) || classNum < 1 || classNum > 10) {
+        this.erroUpdate = 'Classificação deve ser um número inteiro entre 1 e 10.'
+        this.mensagemUpdate = ''
+        return
+      }
 
-      if (res.ok) {
-        this.mensagemUpdate = data.message
-        this.atualizarLista()
-      } else {
-        this.erroUpdate = data.error
+      try {
+        const res = await fetch(`/api/marinheiros/${this.update.id}`, {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            classificacao: classNum, // ✔️ já convertido
+          }),
+        })
+
+        let data
+
+        try {
+          data = await res.json()
+        } catch {
+          data = null
+        }
+
+        if (res.ok) {
+          this.mensagemUpdate = data?.message || 'Atualizado com sucesso.'
+          this.erroUpdate = ''
+          this.atualizarLista()
+        } else {
+          this.erroUpdate = data?.error || 'Erro ao atualizar.'
+          this.mensagemUpdate = ''
+        }
+      } catch (err) {
+        console.error(err)
+        this.erroUpdate = 'Erro de ligação ao servidor.'
+        this.mensagemUpdate = ''
       }
     },
 
-    // US006
+    // US006 ELIMINAR
     async eliminarMarinheiro() {
       const res = await fetch(`/api/marinheiros/${this.idDelete}`, {
         method: 'DELETE',
@@ -374,10 +429,6 @@ export default {
   padding: 20px;
   border-radius: 12px;
   box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
-}
-
-.refresh {
-  margin-bottom: 10px;
 }
 
 table {
