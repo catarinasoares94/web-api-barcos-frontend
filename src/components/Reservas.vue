@@ -1,84 +1,163 @@
 <template>
-  <div class="container">
-    <!-- US010 - RESERVAR BARCO -->
+  <div class="page">
+    <!-- ESQUERDA -->
+    <div class="main">
+      <!-- US011 - LISTAR RESERVAS -->
+      <div v-if="activeBox === 'listar' && mostrarReservas" class="table-box">
+        <table v-if="reservas.length > 0">
+          <thead>
+            <tr>
+              <!-- TODAS -->
+              <template v-if="tipoPesquisa === 'todas'">
+                <th>Data</th>
+                <th>ID Barco</th>
+                <th>Nome Barco</th>
+                <th>Cor</th>
+                <th>ID Marinheiro</th>
+                <th>Nome Marinheiro</th>
+              </template>
 
-    <div class="box">
-      <h2>Reservar Barco</h2>
+              <!-- MARINHEIRO -->
+              <template v-if="tipoPesquisa === 'marinheiro'">
+                <th>ID Barco</th>
+                <th>Nome Barco</th>
+                <th>Data</th>
+              </template>
 
-      <form @submit.prevent="reservarBarco" class="form">
-        <label>ID Marinheiro</label>
-        <input type="number" v-model="reserva.id_marinheiro" required />
+              <!-- BARCO -->
+              <template v-if="tipoPesquisa === 'barco'">
+                <th>ID Marinheiro</th>
+                <th>Nome Marinheiro</th>
+                <th>Data</th>
+              </template>
+            </tr>
+          </thead>
 
-        <label>ID Barco</label>
-        <input type="number" v-model="reserva.id_barco" required />
+          <tbody>
+            <tr v-for="r in reservasPaginadas" :key="r.ID_BARCO + r.DATA">
+              <!-- TODAS -->
+              <template v-if="tipoPesquisa === 'todas'">
+                <td>{{ formatarData(r.DATA) }}</td>
+                <td>{{ r.ID_BARCO }}</td>
+                <td>{{ r.NOME_BARCO }}</td>
+                <td>{{ r.COR }}</td>
+                <td>{{ r.ID_MARINHEIRO }}</td>
+                <td>{{ r.NOME_MARINHEIRO }}</td>
+              </template>
 
-        <label>Data</label>
-        <input type="date" v-model="reserva.data" required />
+              <!-- MARINHEIRO -->
+              <template v-if="tipoPesquisa === 'marinheiro'">
+                <td>{{ r.ID_BARCO }}</td>
+                <td>{{ r.NOME_BARCO }}</td>
+                <td>{{ formatarData(r.DATA) }}</td>
+              </template>
 
-        <button type="submit">Reservar</button>
-      </form>
-    </div>
+              <!-- BARCO -->
+              <template v-if="tipoPesquisa === 'barco'">
+                <td>{{ r.ID_MARINHEIRO }}</td>
+                <td>{{ r.NOME_MARINHEIRO }}</td>
+                <td>{{ formatarData(r.DATA) }}</td>
+              </template>
+            </tr>
+          </tbody>
+        </table>
 
-    <!-- US011 - LISTAR RESERVAS ATRAVES DO ID DO MARINHEIRO -->
+        <p v-else>Sem resultados.</p>
 
-    <div class="box">
-      <h2>Minhas Reservas</h2>
+        <div class="pagination" v-if="totalPages > 1">
+          <button @click="currentPage--" :disabled="currentPage === 1">Anterior</button>
 
-      <input type="number" v-model="idPesquisa" placeholder="ID do Marinheiro" />
+          <span>Página {{ currentPage }} de {{ totalPages }}</span>
 
-      <button @click="listarReservas">Listar Reservas</button>
+          <button @click="currentPage++" :disabled="currentPage === totalPages">Seguinte</button>
+        </div>
 
-      <table v-if="mostrarReservas && reservas.length > 0">
+        <!-- INFO DINÂMICA -->
         <p v-if="reservas.length > 0">
-          <strong>Marinheiro:</strong> {{ reservas[0].NOME_MARINHEIRO }} (ID:
-          {{ reservas[0].ID_MARINHEIRO }})
-        </p>
-        <thead>
-          <tr>
-            <th>ID Barco</th>
-            <th>Nome Barco</th>
-            <th>Cor</th>
-            <th>Data</th>
-          </tr>
-        </thead>
+          <template v-if="tipoPesquisa === 'marinheiro'">
+            <strong>Marinheiro:</strong> {{ reservas[0].NOME_MARINHEIRO }} (ID:
+            {{ reservas[0].ID_MARINHEIRO }})
+          </template>
 
-        <tbody>
-          <tr v-for="r in reservas" :key="r.ID_BARCO + r.DATA">
-            <td>{{ r.ID_BARCO }}</td>
-            <td>{{ r.NOME_BARCO }}</td>
-            <td>{{ r.COR }}</td>
-            <td>{{ formatarData(r.DATA) }}</td>
-          </tr>
-        </tbody>
-      </table>
+          <template v-if="tipoPesquisa === 'barco'">
+            <strong>Barco:</strong> {{ reservas[0].NOME_BARCO }} (ID: {{ reservas[0].ID_BARCO }})
+          </template>
+        </p>
+      </div>
+
+      <!-- FORMS -->
+      <div class="forms-area">
+        <!-- US010 - RESERVAR BARCO -->
+        <div v-if="activeBox === 'reservar'" class="card">
+          <h3>Reservar Barco</h3>
+
+          <form @submit.prevent="reservarBarco" class="form">
+            <label>ID Marinheiro</label>
+            <input type="number" v-model="reserva.id_marinheiro" required />
+
+            <label>ID Barco</label>
+            <input type="number" v-model="reserva.id_barco" required />
+
+            <label>Data</label>
+            <input type="date" v-model="reserva.data" required />
+
+            <button type="submit" class="primary">Reservar</button>
+          </form>
+        </div>
+
+        <!-- US011 - INPUT PARA LISTAR -->
+        <div v-if="activeBox === 'procurar'" class="card">
+          <h3>Procurar Reserva</h3>
+
+          <input type="number" v-model="idPesquisa" placeholder="ID do Marinheiro" />
+          <button @click="listarReservas">Listar por Marinheiro</button>
+
+          <input type="number" v-model="idBarcoPesquisa" placeholder="ID do Barco" />
+          <button @click="listarReservasPorBarco">Listar por Barco</button>
+        </div>
+      </div>
+
+      <!-- US012 - CANCELAR RESERVA -->
+      <div v-if="activeBox === 'cancelar'" class="card danger">
+        <h3>Cancelar Reserva</h3>
+
+        <form @submit.prevent="cancelarReservaForm" class="form">
+          <label>ID Marinheiro</label>
+          <input type="number" v-model="cancelar.id_marinheiro" required />
+
+          <label>ID Barco</label>
+          <input type="number" v-model="cancelar.id_barco" required />
+
+          <label>Data</label>
+          <input type="date" v-model="cancelar.data" required />
+
+          <button type="submit" class="danger">Cancelar Reserva</button>
+        </form>
+      </div>
     </div>
 
-    <!-- US012 - CANCELAR RESERVA NO FUTURO ATRAVES DO SEU ID -->
+    <!-- DIREITA -->
+    <div class="sidebar">
+      <button @click="toggleBox('reservar')">Reservar Barco</button>
 
-    <div class="box">
-      <h2>Cancelar Reserva</h2>
+      <button @click="toggleBox('listar')">Todas as Reservas</button>
 
-      <form @submit.prevent="cancelarReservaForm" class="form">
-        <label>ID Marinheiro</label>
-        <input type="number" v-model="cancelar.id_marinheiro" required />
+      <button @click="toggleBox('procurar')">Procurar Reservas</button>
 
-        <label>ID Barco</label>
-        <input type="number" v-model="cancelar.id_barco" required />
-
-        <label>Data</label>
-        <input type="date" v-model="cancelar.data" required />
-
-        <button type="submit">Cancelar Reserva</button>
-      </form>
+      <button class="danger" @click="toggleBox('cancelar')">Cancelar Reserva</button>
     </div>
   </div>
-  <!-- DIV DO CONTAINER -->
 </template>
 
 <script>
 export default {
   data() {
     return {
+      activeBox: 'reservar',
+
+      currentPage: 1,
+      itemsPerPage: 10,
+
       // US010 - Reservar Barco
       reserva: {
         id_marinheiro: '',
@@ -89,7 +168,9 @@ export default {
       // US011 - Listar Reserva Através de ID de Marinheiro
       reservas: [],
       idPesquisa: '',
+      idBarcoPesquisa: '',
       mostrarReservas: false,
+      tipoPesquisa: '',
 
       // US012 - Cancelar Reserva no Futuro Através do Seu ID
       cancelar: {
@@ -97,10 +178,51 @@ export default {
         id_barco: '',
         data: '',
       },
+
+      async listarTodasReservas() {
+        this.tipoPesquisa = 'todas'
+
+        const res = await fetch('/api/reservas')
+
+        let dados = {}
+        try {
+          dados = await res.json()
+        } catch {}
+
+        if (res.ok) {
+          this.reservas = dados
+          this.mostrarReservas = true
+        } else {
+          this.reservas = []
+          this.mostrarReservas = false
+          alert(dados.error || 'Erro ao listar reservas')
+        }
+      },
     }
   },
 
+  mounted() {
+    this.activeBox = 'listar'
+    this.listarTodasReservas()
+  },
+
+  computed: {
+    reservasPaginadas() {
+      const start = (this.currentPage - 1) * this.itemsPerPage
+      const end = start + this.itemsPerPage
+      return this.reservas.slice(start, end)
+    },
+
+    totalPages() {
+      return Math.ceil(this.reservas.length / this.itemsPerPage)
+    },
+  },
+
   methods: {
+    toggleBox(box) {
+      this.activeBox = box
+    },
+
     // US010 - Reservar Barco
     async reservarBarco() {
       if (!this.reserva.id_marinheiro || !this.reserva.id_barco || !this.reserva.data) {
@@ -137,19 +259,21 @@ export default {
             data: '',
           }
         } else {
-          // Usa diretamente a mensagem do backend
           alert(dados.error || 'Erro ao criar reserva')
         }
       } catch (e) {
         alert('Erro de ligação ao servidor')
       }
     },
+
     // US011 - Listar Reserva Através de ID de Marinheiro
     async listarReservas() {
       if (!this.idPesquisa) {
         alert('Indica o ID do marinheiro')
         return
       }
+
+      this.tipoPesquisa = 'marinheiro'
 
       const res = await fetch(`/api/reservas/marinheiro/${this.idPesquisa}`)
 
@@ -167,10 +291,38 @@ export default {
         alert(dados.error || 'Erro ao listar reservas')
       }
     },
+
+    // US011 - Listar Reserva Através de ID de Barco
+    async listarReservasPorBarco() {
+      if (!this.idBarcoPesquisa) {
+        alert('Indica o ID do barco')
+        return
+      }
+
+      this.tipoPesquisa = 'barco'
+
+      const res = await fetch(`/api/reservas/barco/${this.idBarcoPesquisa}`)
+
+      let dados = {}
+      try {
+        dados = await res.json()
+      } catch {}
+
+      if (res.ok) {
+        this.reservas = dados
+        this.mostrarReservas = true
+      } else {
+        this.reservas = []
+        this.mostrarReservas = false
+        alert(dados.error || 'Erro ao listar reservas')
+      }
+    },
+
     formatarData(data) {
       const d = new Date(data)
       return d.toLocaleDateString()
     },
+
     // US012 - Cancelar Reserva no Futuro Através do Seu ID
     async cancelarReservaForm() {
       if (!this.cancelar.id_marinheiro || !this.cancelar.id_barco || !this.cancelar.data) {
@@ -181,7 +333,7 @@ export default {
       const payload = {
         id_marinheiro: Number(this.cancelar.id_marinheiro),
         id_barco: Number(this.cancelar.id_barco),
-        data: this.cancelar.data, // YYYY-MM-DD → backend faz dataJS
+        data: this.cancelar.data,
       }
 
       try {
@@ -207,7 +359,6 @@ export default {
             data: '',
           }
 
-          // opcional: atualizar lista se estiver visível
           if (this.idPesquisa) {
             this.listarReservas()
           }
@@ -223,56 +374,61 @@ export default {
 </script>
 
 <style>
-.container {
+.page {
+  display: grid;
+  grid-template-columns: 3fr 1fr;
+  gap: 30px;
+  padding: 30px;
+}
+
+/* ESQUERDA */
+.main {
+  position: relative;
+  z-index: 1;
+}
+
+/* TABELA */
+.table-box {
+  background: white;
+  padding: 20px;
+  border-radius: 12px;
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+}
+
+/* SIDEBAR */
+.sidebar {
   display: flex;
   flex-direction: column;
-  gap: 40px;
-  max-width: 600px;
-  margin: 20px 0 20px 40px;
+  gap: 20px;
+  justify-content: center;
 }
 
-.box {
-  background: #ffffff;
-  border-radius: 14px;
-  padding: 25px;
-  box-shadow: 0 8px 20px rgba(192, 26, 26, 0.08);
-  border: 1px solid #ddd;
+/* CARDS */
+.card {
+  background: white;
+  padding: 20px;
+  border-radius: 12px;
 
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 10px;
 
-  transition:
-    transform 0.2s ease,
-    box-shadow 0.2s ease;
-
-  max-width: 350px;
-  width: 100%;
-  margin-bottom: 5px;
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
 }
 
-.box:hover {
-  transform: translateY(-3px);
-  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.08);
-}
-
-.box h2 {
-  font-size: 18px;
+.card h3 {
   margin-bottom: 10px;
-  border-bottom: 2px solid #f1f1f1;
-  padding-bottom: 5px;
 }
 
+/* FORM */
 .form {
   display: flex;
   flex-direction: column;
   gap: 10px;
 }
 
+/* INPUTS */
 input {
-  width: 100%;
-  box-sizing: border-box;
-  width: 100%;
   padding: 8px;
   border-radius: 6px;
   border: 1px solid #ccc;
@@ -280,47 +436,64 @@ input {
 }
 
 input:focus {
-  border-color: #007bff;
-  padding: 6px;
-  border: 1px solid #999;
+  border-color: #999;
 }
 
+/* LABELS */
 label {
-  margin-top: 10px;
-  display: block;
+  margin-top: 5px;
 }
 
+/* BOTÕES */
 button {
-  background: #007bff;
+  background: #2c5364;
   color: white;
   border: none;
-  padding: 8px;
-  border-radius: 6px;
+  padding: 10px;
+  border-radius: 8px;
   cursor: pointer;
-  transition: 0.2s;
 }
 
 button:hover {
-  background: #0056b3;
+  background: #203a43;
 }
 
+/* BOTÃO PRINCIPAL */
+.primary {
+  background: #ff9800;
+}
+
+.primary:hover {
+  background: #e68900;
+}
+
+/* DELETE */
+.danger button {
+  background: #c62828;
+}
+
+.danger button:hover {
+  background: #a61b1b;
+}
+
+/* TABELA */
 table {
   width: 100%;
   border-collapse: collapse;
-  margin-top: 10px;
 }
 
 th {
-  background: #f5f5f5;
+  background: #f4f4f4;
 }
 
 th,
 td {
-  padding: 8px;
-  border: 1px solid #ddd;
+  padding: 10px;
   text-align: center;
+  border-bottom: 1px solid #eee;
 }
 
+/* MENSAGENS */
 .sucesso {
   color: #2e7d32;
   font-weight: 500;
@@ -331,6 +504,7 @@ td {
   font-weight: 500;
 }
 
+/* BACKGROUND */
 body {
   background: #f4f6f9;
 }
