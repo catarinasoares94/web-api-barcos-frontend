@@ -116,7 +116,37 @@ export default {
     },
 
     // US007 - Registo de Barco
+    // US007 - Registo de Barco
     async registarBarco() {
+      const idNum = Number(this.novo.id_barco)
+
+      if (!Number.isInteger(idNum)) {
+        alert('ID do barco deve ser um número inteiro.')
+        return
+      }
+
+      const textoRegex = /^[A-Za-zÀ-ÿ\s]+$/
+
+      if (
+        typeof this.novo.nome !== 'string' ||
+        this.novo.nome.length === 0 ||
+        this.novo.nome.length > 20 ||
+        !textoRegex.test(this.novo.nome)
+      ) {
+        alert('Nome deve conter apenas letras (máx. 20 caracteres).')
+        return
+      }
+
+      if (
+        typeof this.novo.cor !== 'string' ||
+        this.novo.cor.length === 0 ||
+        this.novo.cor.length > 10 ||
+        !textoRegex.test(this.novo.cor)
+      ) {
+        alert('Cor deve conter apenas letras (máx. 10 caracteres).')
+        return
+      }
+
       const res = await fetch('/api/barcos', {
         method: 'POST',
         headers: {
@@ -136,6 +166,8 @@ export default {
           nome: '',
           cor: '',
         }
+
+        this.atualizarLista()
       } else {
         if (texto.includes('ORA-00001') || texto.toLowerCase().includes('unique')) {
           alert('ID já existe')
