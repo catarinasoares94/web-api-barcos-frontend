@@ -1,122 +1,145 @@
 <template>
-  <div class="container">
-    <!-- US008 - LISTAR TODOS OS BARCOS REGISTADOS NO SISTEMA -->
+  <div class="page">
+    <!-- ESQUERDA -->
+    <div class="main">
+      <!-- US008 - LISTAR TODOS OS BARCOS REGISTADOS NO SISTEMA -->
+      <div class="table-box" v-if="activeBox === 'listar'">
+        <table v-if="barcos.length">
+          <thead>
+            <tr>
+              <th>ID</th>
+              <th>Nome</th>
+              <th>Cor</th>
+            </tr>
+          </thead>
 
-    <div class="box">
-      <h2>Ver Todos os Barcos Registados no Sistema</h2>
+          <tbody>
+            <tr v-for="b in barcos" :key="b[0]">
+              <td>{{ b[0] }}</td>
+              <td>{{ b[1] }}</td>
+              <td>{{ b[2] }}</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
 
-      <button @click="toggle">
-        {{ mostrarTabela ? 'Esconder Barcos' : 'Listar Barcos' }}
-      </button>
+      <!-- FORMS -->
+      <div class="forms-area">
+        <!-- US007 - REGISTAR UM BARCO ( ID, NOME E COR ) -->
+        <div v-if="activeBox === 'registar'" class="card">
+          <h3>Registar Barco</h3>
 
-      <button @click="atualizarLista" v-if="mostrarTabela">Atualizar Lista</button>
+          <input v-model="novo.id_barco" placeholder="ID" />
+          <input v-model="novo.nome" placeholder="Nome" />
+          <input v-model="novo.cor" placeholder="Cor" />
 
-      <p></p>
+          <button class="primary" @click="registarBarco">Registar</button>
+        </div>
 
-      <table v-if="mostrarTabela && barcos.length > 0">
-        <thead>
-          <tr>
-            <th>ID</th>
-            <th>Nome</th>
-            <th>Cor</th>
-          </tr>
-        </thead>
+        <!-- US009 - LISTAR TODOS OS BARCOS DISPONIVEIS PARA RESERVA -->
+        <div v-if="activeBox === 'disponiveis'" class="card">
+          <h3>Barcos Disponíveis</h3>
 
-        <tbody>
-          <tr v-for="m in barcos" :key="m[0]">
-            <td>{{ m[0] }}</td>
-            <td>{{ m[1] }}</td>
-            <td>{{ m[2] }}</td>
-          </tr>
-        </tbody>
-      </table>
+          <table>
+            <thead>
+              <tr>
+                <th>ID</th>
+                <th>Nome</th>
+                <th>Cor</th>
+              </tr>
+            </thead>
+
+            <tbody>
+              <tr v-for="b in barcosDisponiveis" :key="b[0]">
+                <td>{{ b[0] }}</td>
+                <td>{{ b[1] }}</td>
+                <td>{{ b[2] }}</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- DELETE BARCO -->
+      <div v-if="activeBox === 'delete'" class="card danger">
+        <h3>Eliminar Barco</h3>
+
+        <input v-model="idDelete" placeholder="ID do barco" />
+
+        <button class="danger" @click="eliminarBarco">Eliminar</button>
+
+        <p v-if="mensagemDelete">{{ mensagemDelete }}</p>
+        <p v-if="erroDelete">{{ erroDelete }}</p>
+      </div>
     </div>
 
-    <!-- US007 - REGISTAR UM BARCO ( ID, NOME E COR ) -->
+    <!-- DIREITA -->
+    <div class="sidebar">
+      <button @click="toggleBox('listar')">Listar Barcos</button>
 
-    <div class="box">
-      <h2>Registar Barco</h2>
+      <button @click="toggleBox('registar')">Registar Barco</button>
 
-      <form @submit.prevent="registarBarco" class="form">
-        <label>ID</label>
-        <input type="number" v-model="novo.id_barco" placeholder="ID" required />
+      <button @click="toggleBox('disponiveis')">Barcos Disponíveis</button>
 
-        <label>Nome</label>
-        <input type="text" v-model="novo.nome" placeholder="Nome" required />
-
-        <label>Cor</label>
-        <input type="text" v-model="novo.cor" placeholder="Cor" required />
-
-        <button type="submit">Registar</button>
-      </form>
-    </div>
-
-    <!-- US009 - LISTAR TODOS OS BARCOS DISPONIVEIS PARA RESERVA -->
-    <div class="box">
-      <h2>Barcos Disponiveis para Reserva</h2>
-
-      <button @click="toggleDisponiveis">
-        {{ mostrarDisponiveis ? 'Esconder' : 'Listar Disponiveis' }}
-      </button>
-
-      <table v-if="mostrarDisponiveis && barcosDisponiveis.length > 0">
-        <thead>
-          <tr>
-            <th>ID</th>
-            <th>Nome</th>
-            <th>Cor</th>
-          </tr>
-        </thead>
-
-        <tbody>
-          <tr v-for="b in barcosDisponiveis" :key="b[0]">
-            <td>{{ b[0] }}</td>
-            <td>{{ b[1] }}</td>
-            <td>{{ b[2] }}</td>
-          </tr>
-        </tbody>
-      </table>
+      <button class="danger" @click="toggleBox('delete')">Eliminar Barco</button>
     </div>
   </div>
-  <!-- DIV DO CONTAINER -->
 </template>
 
 <script>
 export default {
   data() {
     return {
-      // US008 - Lista de barcos
-      barcos: [],
-      mostrarTabela: false,
+      // CONTROLO UI
+      activeBox: 'listar',
 
-      // US007 - Registo de Barco
+      // US008 - Lista de barcos disponiveis no sistema
+      barcos: [],
+
+      // US007 - Registo de barco (id, nome e cor)
       novo: {
         id_barco: '',
         nome: '',
         cor: '',
       },
 
-      // US009 - Lista de barcos Disponiveis para Reserva
+      // US009 - Listar Barcos Disponiveis para Reserva
       barcosDisponiveis: [],
-      mostrarDisponiveis: false,
+
+      //Eliminar barco
+      idDelete: '',
+      mensagemDelete: '',
+      erroDelete: '',
     }
   },
 
-  methods: {
-    // US008 - Lista de barcos
-    async toggle() {
-      this.mostrarTabela = !this.mostrarTabela
+  async mounted() {
+    await this.atualizarLista()
+  },
 
-      if (this.mostrarTabela && this.barcos.length === 0) {
-        const res = await fetch('/api/barcos')
-        this.barcos = await res.json()
-      } else {
-        this.barcos = []
+  methods: {
+    // TROCAR BOX
+    async toggleBox(box) {
+      this.activeBox = box
+
+      // carregar dados automaticamente ao entrar
+
+      if (box === 'listar') {
+        await this.atualizarLista()
+      }
+
+      if (box === 'disponiveis') {
+        await this.listarDisponiveis()
       }
     },
 
-    // US007 - Registo de Barco
-    // US007 - Registo de Barco
+    // US008 - Lista de barcos disponiveis no sistema
+    async atualizarLista() {
+      const res = await fetch('/api/barcos')
+      this.barcos = await res.json()
+    },
+
+    // US007 - Registo de barco (id, nome e cor)
     async registarBarco() {
       const idNum = Number(this.novo.id_barco)
 
@@ -167,7 +190,11 @@ export default {
           cor: '',
         }
 
-        this.atualizarLista()
+        // atualizar lista automaticamente
+        await this.atualizarLista()
+
+        // opcional: voltar à lista
+        this.activeBox = 'listar'
       } else {
         if (texto.includes('ORA-00001') || texto.toLowerCase().includes('unique')) {
           alert('ID já existe')
@@ -176,28 +203,57 @@ export default {
         }
       }
     },
-    // Atualizar
-    async atualizarLista() {
-      const res = await fetch('/api/barcos')
-      this.barcos = await res.json()
+
+    // US009 - Listar Barcos Disponiveis para Reserva
+    async listarDisponiveis() {
+      const res = await fetch('/api/barcos/disponiveis')
+      const dados = await res.json()
+
+      if (res.ok) {
+        this.barcosDisponiveis = dados
+      } else {
+        this.barcosDisponiveis = []
+        alert(dados.error || 'Nenhum barco disponível')
+      }
     },
 
-    // US009 - Lista de barcos Disponiveis para Reserva
-    async toggleDisponiveis() {
-      this.mostrarDisponiveis = !this.mostrarDisponiveis
+    //Eliminar barco
+    async eliminarBarco() {
+      this.mensagemDelete = ''
+      this.erroDelete = ''
 
-      if (this.mostrarDisponiveis && this.barcosDisponiveis.length === 0) {
-        const res = await fetch('/api/barcos/disponiveis')
+      const idNum = Number(this.idDelete)
+
+      if (!Number.isInteger(idNum)) {
+        this.erroDelete = 'ID inválido. Inserir apenas números inteiros.'
+        return
+      }
+
+      try {
+        const res = await fetch(`/api/barcos/${idNum}`, {
+          method: 'DELETE',
+        })
+
         const dados = await res.json()
 
         if (res.ok) {
-          this.barcosDisponiveis = dados
-        } else {
-          this.barcosDisponiveis = []
-          alert(dados.error || 'Nenhum barco disponível')
+          this.mensagemDelete = 'Barco eliminado com sucesso.'
+          this.idDelete = ''
+          await this.atualizarLista()
+          return
         }
-      } else {
-        this.barcosDisponiveis = []
+
+        // TRATAR ERROS ESPECÍFICOS
+        if (res.status === 404) {
+          this.erroDelete = 'Barco não existe.'
+        } else if (res.status === 400) {
+          this.erroDelete = 'Barco tem reservas associadas.'
+        } else {
+          this.erroDelete = dados.error || 'Erro ao eliminar.'
+        }
+      } catch (err) {
+        console.error(err)
+        this.erroDelete = 'Erro de ligação ao servidor.'
       }
     },
   },
@@ -205,115 +261,141 @@ export default {
 </script>
 
 <style>
-.container {
+.pagination {
+  margin-top: 15px;
   display: flex;
-  flex-direction: column;
-  gap: 40px;
-  max-width: 600px;
-  margin: 20px 0 20px 40px;
+  justify-content: center;
+  gap: 15px;
 }
 
-.box {
-  background: #ffffff;
-  border-radius: 14px;
-  padding: 25px;
-  box-shadow: 0 8px 20px rgba(192, 26, 26, 0.08);
-  border: 1px solid #ddd;
-
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-
-  transition:
-    transform 0.2s ease,
-    box-shadow 0.2s ease;
-
-  max-width: 350px;
-  width: 100%;
-  margin-bottom: 5px;
-}
-
-.box:hover {
-  transform: translateY(-3px);
-  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.08);
-}
-
-.box h2 {
-  font-size: 18px;
-  margin-bottom: 10px;
-  border-bottom: 2px solid #f1f1f1;
-  padding-bottom: 5px;
-}
-
-.form {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-}
-
-input {
-  width: 100%;
-  box-sizing: border-box;
-  width: 100%;
-  padding: 8px;
+.pagination button {
+  padding: 8px 12px;
   border-radius: 6px;
-  border: 1px solid #ccc;
-  outline: none;
-}
-
-input:focus {
-  border-color: #007bff;
-  padding: 6px;
-  border: 1px solid #999;
-}
-
-label {
-  margin-top: 10px;
-  display: block;
-}
-
-button {
-  background: #007bff;
-  color: white;
   border: none;
-  padding: 8px;
-  border-radius: 6px;
+  background: #2c5364;
+  color: white;
   cursor: pointer;
-  transition: 0.2s;
 }
 
-button:hover {
-  background: #0056b3;
+.pagination button:disabled {
+  background: #ccc;
+  cursor: not-allowed;
+}
+
+.page {
+  display: grid;
+  grid-template-columns: 3fr 1fr;
+  gap: 30px;
+  padding: 30px;
+}
+
+/* ESQUERDA */
+.main {
+  flex: 3;
+  position: relative;
+  z-index: 1;
+}
+
+/* HEADER */
+.header-box {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+
+  margin-bottom: 20px;
+}
+
+.header-box h1 {
+  font-size: 28px;
+}
+
+/* TABELA */
+.table-box {
+  background: white;
+  padding: 20px;
+  border-radius: 12px;
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
 }
 
 table {
   width: 100%;
   border-collapse: collapse;
-  margin-top: 10px;
 }
 
 th {
-  background: #f5f5f5;
+  background: #f4f4f4;
 }
 
 th,
 td {
-  padding: 8px;
-  border: 1px solid #ddd;
+  padding: 10px;
   text-align: center;
+  border-bottom: 1px solid #eee;
 }
 
-.sucesso {
-  color: #2e7d32;
-  font-weight: 500;
+/* SIDEBAR */
+.sidebar {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+
+  justify-content: center;
 }
 
-.erro {
-  color: #c62828;
-  font-weight: 500;
+/* CARDS */
+.card {
+  background: white;
+  padding: 20px;
+  border-radius: 12px;
+
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
 }
 
-body {
-  background: #f4f6f9;
+.card h3 {
+  margin-bottom: 10px;
+}
+
+/* INPUTS */
+input {
+  padding: 8px;
+  border-radius: 6px;
+  border: 1px solid #ccc;
+}
+
+/* BOTÕES */
+button {
+  background: #2c5364;
+  color: white;
+  border: none;
+  padding: 10px;
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+button:hover {
+  background: #203a43;
+}
+
+/* BOTÃO PRINCIPAL */
+.primary {
+  background: #ff9800;
+}
+
+.primary:hover {
+  background: #e68900;
+}
+
+/* DELETE */
+.danger button {
+  background: #c62828;
+}
+
+.danger button:hover {
+  background: #a61b1b;
 }
 </style>
