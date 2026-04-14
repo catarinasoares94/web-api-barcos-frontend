@@ -1,87 +1,70 @@
 <template>
-  <div class="page">
-    <!-- ESQUERDA -->
-    <div class="main">
-      <!-- US008 - LISTAR TODOS OS BARCOS REGISTADOS NO SISTEMA -->
-      <div class="table-box" v-if="activeBox === 'listar'">
-        <table v-if="barcos.length">
-          <thead>
-            <tr>
-              <th>ID</th>
-              <th>Nome</th>
-              <th>Cor</th>
-            </tr>
-          </thead>
+  <div class="table-box">
+    <!-- US008 - LISTAR TODOS OS BARCOS REGISTADOS NO SISTEMA -->
 
-          <tbody>
-            <tr v-for="b in barcos" :key="b[0]">
-              <td>{{ b[0] }}</td>
-              <td>{{ b[1] }}</td>
-              <td>{{ b[2] }}</td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
-
-      <!-- FORMS -->
-      <div class="forms-area">
-        <!-- US007 - REGISTAR UM BARCO ( ID, NOME E COR ) -->
-        <div v-if="activeBox === 'registar'" class="card">
-          <h3>Registar Barco</h3>
-
-          <input v-model="novo.id_barco" placeholder="ID" />
-          <input v-model="novo.nome" placeholder="Nome" />
-          <input v-model="novo.cor" placeholder="Cor" />
-
-          <button class="primary" @click="registarBarco">Registar</button>
-        </div>
-
-        <!-- US009 - LISTAR TODOS OS BARCOS DISPONIVEIS PARA RESERVA -->
-        <div v-if="activeBox === 'disponiveis'" class="card">
-          <h3>Barcos Disponíveis</h3>
-
-          <table>
-            <thead>
-              <tr>
-                <th>ID</th>
-                <th>Nome</th>
-                <th>Cor</th>
-              </tr>
-            </thead>
-
-            <tbody>
-              <tr v-for="b in barcosDisponiveis" :key="b[0]">
-                <td>{{ b[0] }}</td>
-                <td>{{ b[1] }}</td>
-                <td>{{ b[2] }}</td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
-      </div>
-
-      <!-- DELETE BARCO -->
-      <div v-if="activeBox === 'delete'" class="card danger">
-        <h3>Eliminar Barco</h3>
-
-        <input v-model="idDelete" placeholder="ID do barco" />
-
-        <button class="danger" @click="eliminarBarco">Eliminar</button>
-
-        <p v-if="mensagemDelete">{{ mensagemDelete }}</p>
-        <p v-if="erroDelete">{{ erroDelete }}</p>
-      </div>
+    <!-- FILTROS -->
+    <div class="filters">
+      <input v-model="filtros.id" placeholder="ID" />
+      <input v-model="filtros.nome" placeholder="Nome" />
+      <input v-model="filtros.cor" placeholder="Cor" />
+      <button class="clear" @click="limparFiltros">Limpar filtros</button>
     </div>
 
-    <!-- DIREITA -->
-    <div class="sidebar">
-      <button @click="toggleBox('listar')">Listar Barcos</button>
+    <table>
+      <thead>
+        <tr>
+          <th>ID</th>
+          <th>Nome</th>
+          <th>Cor</th>
+          <th>
+            <div class="acoes-header">
+              <span>Ações</span>
+              <button class="add" @click="ativarCriacao" :disabled="creating">+</button>
+              <span class="novo-texto">Novo</span>
+            </div>
+          </th>
+        </tr>
+      </thead>
 
-      <button @click="toggleBox('registar')">Registar Barco</button>
+      <tbody>
+        <!-- CRIAR INLINE -->
+        <tr v-if="creating">
+          <td><input v-model="novoInline.id_barco" /></td>
+          <td><input v-model="novoInline.nome" /></td>
+          <td><input v-model="novoInline.cor" /></td>
+          <td>
+            <button @click="guardarNovoInline">💾</button>
+            <button @click="cancelarCriacao">❌</button>
+          </td>
+        </tr>
 
-      <button @click="toggleBox('disponiveis')">Barcos Disponíveis</button>
+        <!-- ERROS -->
+        <tr v-if="erroInline">
+          <td colspan="4" class="erro">{{ erroInline }}</td>
+        </tr>
 
-      <button class="danger" @click="toggleBox('delete')">Eliminar Barco</button>
+        <tr v-if="mensagemInline">
+          <td colspan="4" class="sucesso">{{ mensagemInline }}</td>
+        </tr>
+
+        <!-- LISTA -->
+        <tr v-for="b in barcosPaginados" :key="b[0]">
+          <td>{{ b[0] }}</td>
+          <td>{{ b[1] }}</td>
+          <td>{{ b[2] }}</td>
+
+          <td>
+            <button @click="prepararDelete(b[0])">❌</button>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+
+    <!-- PAGINAÇÃO -->
+    <div class="pagination" v-if="totalPages > 1">
+      <button @click="currentPage--" :disabled="currentPage === 1">Anterior</button>
+      <span>Página {{ currentPage }} de {{ totalPages }}</span>
+      <button @click="currentPage++" :disabled="currentPage === totalPages">Seguinte</button>
     </div>
   </div>
 </template>
@@ -90,9 +73,6 @@
 export default {
   data() {
     return {
-      // CONTROLO UI
-      activeBox: 'listar',
-
       // US008 - Lista de barcos disponiveis no sistema
       barcos: [],
 
@@ -103,33 +83,148 @@ export default {
         cor: '',
       },
 
-      // US009 - Listar Barcos Disponiveis para Reserva
-      barcosDisponiveis: [],
-
       //Eliminar barco
       idDelete: '',
       mensagemDelete: '',
       erroDelete: '',
+
+      // ----------- TABELA -----------
+
+      currentPage: 1,
+      itemsPerPage: 10,
+
+      filtros: { id: '', nome: '', cor: '' },
+
+      creating: false,
+      novoInline: { id_barco: '', nome: '', cor: '' },
+
+      erroInline: '',
+      mensagemInline: '',
     }
   },
 
   async mounted() {
     await this.atualizarLista()
+    document.addEventListener('click', this.limparMensagensGlobal)
+  },
+
+  computed: {
+    barcosFiltradosLocal() {
+      return this.barcos.filter((b) => {
+        if (this.filtros.id && Number(b[0]) !== Number(this.filtros.id)) return false
+        if (this.filtros.nome && !b[1].toLowerCase().includes(this.filtros.nome.toLowerCase()))
+          return false
+        if (this.filtros.cor && !b[2].toLowerCase().includes(this.filtros.cor.toLowerCase()))
+          return false
+        return true
+      })
+    },
+
+    barcosPaginados() {
+      const start = (this.currentPage - 1) * this.itemsPerPage
+      return this.barcosFiltradosLocal.slice(start, start + this.itemsPerPage)
+    },
+
+    totalPages() {
+      return Math.max(1, Math.ceil(this.barcosFiltradosLocal.length / this.itemsPerPage))
+    },
   },
 
   methods: {
-    // TROCAR BOX
-    async toggleBox(box) {
-      this.activeBox = box
+    limparMensagensGlobal(event) {
+      const tabela = this.$el
+      if (!tabela.contains(event.target)) {
+        this.erroInline = ''
+        this.mensagemInline = ''
+      }
+    },
 
-      // carregar dados automaticamente ao entrar
+    limparFiltros() {
+      this.filtros = { id: '', nome: '', cor: '' }
+      this.currentPage = 1
+    },
 
-      if (box === 'listar') {
-        await this.atualizarLista()
+    ativarCriacao() {
+      this.erroInline = ''
+      this.mensagemInline = ''
+      this.creating = true
+    },
+
+    cancelarCriacao() {
+      this.creating = false
+      this.erroInline = ''
+      this.novoInline = { id_barco: '', nome: '', cor: '' }
+    },
+
+    async guardarNovoInline() {
+      this.erroInline = ''
+      this.mensagemInline = ''
+
+      const idNum = Number(this.novoInline.id_barco)
+      if (!Number.isInteger(idNum)) {
+        this.erroInline = 'ID inválido.'
+        return
       }
 
-      if (box === 'disponiveis') {
-        await this.listarDisponiveis()
+      const textoRegex = /^[A-Za-zÀ-ÿ\s]+$/
+
+      if (!textoRegex.test(this.novoInline.nome)) {
+        this.erroInline = 'Nome inválido.'
+        return
+      }
+
+      if (!textoRegex.test(this.novoInline.cor)) {
+        this.erroInline = 'Cor inválida.'
+        return
+      }
+
+      try {
+        const res = await fetch('/api/barcos', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(this.novoInline),
+        })
+
+        if (!res.ok) {
+          const texto = await res.text()
+
+          if (texto.includes('ORA-00001') || texto.toLowerCase().includes('unique')) {
+            this.erroInline = 'ID já existe'
+          } else {
+            this.erroInline = 'Erro ao criar'
+          }
+          return
+        }
+
+        this.cancelarCriacao()
+        this.mensagemInline = 'Barco criado com sucesso'
+        await this.atualizarLista()
+      } catch {
+        this.erroInline = 'Erro de ligação'
+      }
+    },
+
+    async prepararDelete(id) {
+      this.erroInline = ''
+      this.mensagemInline = ''
+
+      const confirmacao = confirm('Tens a certeza que queres eliminar este barco?')
+      if (!confirmacao) return
+
+      try {
+        const res = await fetch(`/api/barcos/${id}`, {
+          method: 'DELETE',
+        })
+
+        if (!res.ok) {
+          this.erroInline = 'Barco tem reservas associadas.'
+          return
+        }
+
+        this.mensagemInline = 'Barco eliminado com sucesso'
+        await this.atualizarLista()
+      } catch {
+        this.erroInline = 'Erro de ligação'
       }
     },
 
@@ -137,6 +232,10 @@ export default {
     async atualizarLista() {
       const res = await fetch('/api/barcos')
       this.barcos = await res.json()
+
+      if (this.currentPage > this.totalPages) {
+        this.currentPage = this.totalPages
+      }
     },
 
     // US007 - Registo de barco (id, nome e cor)
@@ -190,70 +289,13 @@ export default {
           cor: '',
         }
 
-        // atualizar lista automaticamente
         await this.atualizarLista()
-
-        // opcional: voltar à lista
-        this.activeBox = 'listar'
       } else {
         if (texto.includes('ORA-00001') || texto.toLowerCase().includes('unique')) {
           alert('ID já existe')
         } else {
           alert('Erro ao registar')
         }
-      }
-    },
-
-    // US009 - Listar Barcos Disponiveis para Reserva
-    async listarDisponiveis() {
-      const res = await fetch('/api/barcos/disponiveis')
-      const dados = await res.json()
-
-      if (res.ok) {
-        this.barcosDisponiveis = dados
-      } else {
-        this.barcosDisponiveis = []
-        alert(dados.error || 'Nenhum barco disponível')
-      }
-    },
-
-    //Eliminar barco
-    async eliminarBarco() {
-      this.mensagemDelete = ''
-      this.erroDelete = ''
-
-      const idNum = Number(this.idDelete)
-
-      if (!Number.isInteger(idNum)) {
-        this.erroDelete = 'ID inválido. Inserir apenas números inteiros.'
-        return
-      }
-
-      try {
-        const res = await fetch(`/api/barcos/${idNum}`, {
-          method: 'DELETE',
-        })
-
-        const dados = await res.json()
-
-        if (res.ok) {
-          this.mensagemDelete = 'Barco eliminado com sucesso.'
-          this.idDelete = ''
-          await this.atualizarLista()
-          return
-        }
-
-        // TRATAR ERROS ESPECÍFICOS
-        if (res.status === 404) {
-          this.erroDelete = 'Barco não existe.'
-        } else if (res.status === 400) {
-          this.erroDelete = 'Barco tem reservas associadas.'
-        } else {
-          this.erroDelete = dados.error || 'Erro ao eliminar.'
-        }
-      } catch (err) {
-        console.error(err)
-        this.erroDelete = 'Erro de ligação ao servidor.'
       }
     },
   },
@@ -282,39 +324,15 @@ export default {
   cursor: not-allowed;
 }
 
-.page {
-  display: grid;
-  grid-template-columns: 3fr 1fr;
-  gap: 30px;
-  padding: 30px;
-}
-
-/* ESQUERDA */
-.main {
-  flex: 3;
-  position: relative;
-  z-index: 1;
-}
-
-/* HEADER */
-.header-box {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-
-  margin-bottom: 20px;
-}
-
-.header-box h1 {
-  font-size: 28px;
-}
-
 /* TABELA */
 .table-box {
   background: white;
   padding: 20px;
   border-radius: 12px;
   box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+
+  max-width: 1200px;
+  margin: 0 auto;
 }
 
 table {
@@ -331,16 +349,6 @@ td {
   padding: 10px;
   text-align: center;
   border-bottom: 1px solid #eee;
-}
-
-/* SIDEBAR */
-.sidebar {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  gap: 20px;
-
-  justify-content: center;
 }
 
 /* CARDS */
@@ -397,5 +405,57 @@ button:hover {
 
 .danger button:hover {
   background: #a61b1b;
+}
+
+/* FILTROS */
+.filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-bottom: 15px;
+  justify-content: center;
+}
+
+.filters input {
+  flex: 1 1 150px;
+  max-width: 200px;
+}
+
+/* HEADER AÇÕES */
+.acoes-header {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+
+.add {
+  background: #4caf50;
+  padding: 6px 10px;
+  border-radius: 6px;
+}
+
+.novo-texto {
+  font-size: 12px;
+  color: #4caf50;
+  font-weight: 500;
+}
+
+/* BOTÃO LIMPAR */
+.clear {
+  background: #999;
+  padding: 6px 10px;
+  border-radius: 6px;
+}
+
+/* MENSAGENS */
+.erro {
+  color: red;
+  text-align: center;
+}
+
+.sucesso {
+  color: green;
+  text-align: center;
 }
 </style>

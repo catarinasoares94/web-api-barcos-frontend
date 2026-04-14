@@ -17,8 +17,11 @@
           <th>Classificação</th>
           <th>Idade</th>
           <th>
-            Ações
-            <button class="add" @click="ativarCriacao" :disabled="creating">+</button>
+            <div class="acoes-header">
+              <span>Ações</span>
+              <button class="add" @click="ativarCriacao" :disabled="creating">+</button>
+              <span class="novo-texto">Novo</span>
+            </div>
           </th>
         </tr>
       </thead>
@@ -223,8 +226,8 @@ export default {
     },
 
     ativarCriacao() {
-      this.erroInline = 'Erro ao criar marinheiro.'
-      this.mensagemInline = 'Marinheiro registado com sucesso.'
+      this.erroInline = ''
+      this.mensagemInline = ''
       this.creating = true
     },
 
@@ -514,6 +517,19 @@ td {
 
 td button {
   margin: 0 4px;
+}
+
+.acoes-header {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+
+.novo-texto {
+  font-size: 12px;
+  color: #4caf50;
+  font-weight: 500;
 }
 
 /* FILTROS */
