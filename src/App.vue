@@ -1,9 +1,7 @@
 <template>
   <!-- NAVBAR (escondida na Home) -->
   <header v-if="$route.path !== '/'" class="navbar">
-    <div class="logo">
-      ⚓ {{ $route.path.includes('reservas') ? 'MARINHEIRO' : 'GESTOR' }}
-    </div>
+    <div class="logo">⚓ {{ $route.path.includes('reservas') ? 'MARINHEIRO' : 'GESTOR' }}</div>
 
     <nav class="nav-links">
       <router-link to="/">Home</router-link>
@@ -19,7 +17,7 @@
   </main>
 </template>
 
-<style scoped> 
+<style scoped>
 /* NAVBAR */
 .navbar {
   display: flex;
@@ -31,7 +29,7 @@
   background: linear-gradient(90deg, #0f2027, #203a43, #2c5364);
   color: white;
 
-  box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
 }
 
 /* LOGO */

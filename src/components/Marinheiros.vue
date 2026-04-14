@@ -1,145 +1,86 @@
 <template>
-  <div class="page">
-    <!-- ESQUERDA -->
-    <div class="main">
-      <!-- TABELA -->
-      <div class="table-box" v-if="activeBox === 'listar'">
-        <table>
-          <thead>
-            <tr>
-              <th>ID</th>
-              <th>Nome</th>
-              <th>Classificação</th>
-              <th>Idade</th>
-            </tr>
-          </thead>
-
-          <tbody>
-            <tr v-for="m in marinheirosPaginados" :key="m[0]">
-              <td>{{ m[0] }}</td>
-              <td>{{ m[1] }}</td>
-              <td>{{ m[2] }}</td>
-              <td>{{ m[3] }}</td>
-            </tr>
-          </tbody>
-        </table>
-
-        <div class="pagination" v-if="totalPages > 1">
-          <button @click="currentPage--" :disabled="currentPage === 1">Anterior</button>
-          <span>Página {{ currentPage }} de {{ totalPages }}</span>
-          <button @click="currentPage++" :disabled="currentPage === totalPages">Seguinte</button>
-        </div>
-      </div>
-
-      <div class="forms-area" :key="activeBox">
-        <!-- US001 REGISTAR MARINHEIRO -->
-        <div v-if="activeBox === 'registar'" class="card">
-          <h3>Registar</h3>
-
-          <input v-model="novo.id_marinheiro" placeholder="ID" />
-          <input v-model="novo.nome" placeholder="Nome" />
-          <input v-model="novo.idade" placeholder="Idade" />
-          <input v-model="novo.classificacao" placeholder="Classificação" />
-
-          <button class="primary" @click="registarMarinheiro">Registar</button>
-        </div>
-
-        <!-- US003 LISTAR MARINHEIRO POR CLASSIFICAÇÃO -->
-        <div v-if="activeBox === 'filtro'" class="card">
-          <h3>Filtrar por Classificação</h3>
-
-          <input v-model="filtroClassificacao" placeholder="Ex: 5 (Entre 1 e 10)" />
-          <button @click="listarPorClassificacao">Filtrar</button>
-
-          <!-- RESULTADOS -->
-          <table v-if="marinheirosFiltrados.length">
-            <thead>
-              <tr>
-                <th>ID</th>
-                <th>Nome</th>
-                <th>Classificação</th>
-                <th>Idade</th>
-              </tr>
-            </thead>
-
-            <tbody>
-              <tr v-for="m in marinheirosFiltrados" :key="m[0]">
-                <td>{{ m[0] }}</td>
-                <td>{{ m[1] }}</td>
-                <td>{{ m[2] }}</td>
-                <td>{{ m[3] }}</td>
-              </tr>
-            </tbody>
-          </table>
-
-          <p v-if="erroFiltro">{{ erroFiltro }}</p>
-        </div>
-
-        <!-- US004 LISTAR INFO DE MARINHEIRO POR ID -->
-        <div v-if="activeBox === 'procurar'" class="card">
-          <h3>Procurar por ID</h3>
-
-          <input v-model="idPesquisa" placeholder="ID" />
-          <button @click="procurarPorId">Procurar</button>
-
-          <!-- RESULTADO -->
-          <table v-if="marinheiroEncontrado.length">
-            <thead>
-              <tr>
-                <th>ID</th>
-                <th>Nome</th>
-                <th>Classificação</th>
-                <th>Idade</th>
-              </tr>
-            </thead>
-
-            <tbody>
-              <tr>
-                <td>{{ marinheiroEncontrado[0][0] }}</td>
-                <td>{{ marinheiroEncontrado[0][1] }}</td>
-                <td>{{ marinheiroEncontrado[0][2] }}</td>
-                <td>{{ marinheiroEncontrado[0][3] }}</td>
-              </tr>
-            </tbody>
-          </table>
-
-          <p v-if="erroId">{{ erroId }}</p>
-        </div>
-
-        <!-- US005 - UPDATE DE CLASSIFICAÇAO ATRAVES DE ID -->
-        <div v-if="activeBox === 'update'" class="card">
-          <h3>Atualizar Classificação</h3>
-
-          <input v-model="update.id" placeholder="ID" />
-          <input v-model="update.classificacao" placeholder="Nova classificação" />
-
-          <button @click="atualizarClassificacao">Atualizar</button>
-
-          <p v-if="mensagemUpdate">{{ mensagemUpdate }}</p>
-          <p v-if="erroUpdate">{{ erroUpdate }}</p>
-        </div>
-
-        <!-- US006 - ELIMINAR MARINHEIRO (SEM RESERVA ASSOCIADA OBRIGATORIO) -->
-        <div v-if="activeBox === 'delete'" class="card danger">
-          <h3>Eliminar</h3>
-
-          <input v-model="idDelete" placeholder="ID" />
-          <button @click="eliminarMarinheiro">Eliminar</button>
-
-          <p v-if="mensagemDelete">{{ mensagemDelete }}</p>
-          <p v-if="erroDelete">{{ erroDelete }}</p>
-        </div>
-      </div>
+  <div class="table-box">
+    <!-- FILTROS -->
+    <div class="filters">
+      <input v-model="filtros.id" placeholder="ID" />
+      <input v-model="filtros.nome" placeholder="Nome..." />
+      <input v-model="filtros.classificacao" placeholder="Classificação" />
+      <input v-model="filtros.idade" placeholder="Idade" />
+      <button class="clear" @click="limparFiltros">Limpar filtros</button>
     </div>
 
-    <!-- DIREITA -->
-    <div class="sidebar">
-      <button @click="toggleBox('listar')">Listar Marinheiros</button>
-      <button @click="toggleBox('registar')">Registar Marinheiro</button>
-      <button @click="toggleBox('filtro')">Filtrar por Classificação</button>
-      <button @click="toggleBox('procurar')">Procurar por ID</button>
-      <button @click="toggleBox('update')">Atualizar Classificação</button>
-      <button class="danger" @click="toggleBox('delete')">Eliminar Marinheiro</button>
+    <table>
+      <thead>
+        <tr>
+          <th>ID</th>
+          <th>Nome</th>
+          <th>Classificação</th>
+          <th>Idade</th>
+          <th>
+            Ações
+            <button class="add" @click="ativarCriacao" :disabled="creating">+</button>
+          </th>
+        </tr>
+      </thead>
+
+      <tbody>
+        <!-- CRIAR INLINE - A TABELA PARA CLICAR DENTRO -->
+        <tr v-if="creating">
+          <td><input v-model="novoInline.id_marinheiro" /></td>
+          <td><input v-model="novoInline.nome" /></td>
+          <td><input v-model="novoInline.classificacao" /></td>
+          <td><input v-model="novoInline.idade" /></td>
+          <td>
+            <button @click="guardarNovoInline">💾</button>
+            <button @click="cancelarCriacao">❌</button>
+          </td>
+        </tr>
+
+        <!-- ERROS -->
+        <tr v-if="erroInline">
+          <td colspan="5" class="erro">{{ erroInline }}</td>
+        </tr>
+
+        <tr v-if="mensagemInline">
+          <td colspan="5" class="sucesso">{{ mensagemInline }}</td>
+        </tr>
+
+        <!-- LISTA -->
+        <tr v-for="m in marinheirosPaginados" :key="m[0]">
+          <td>{{ m[0] }}</td>
+          <td>{{ m[1] }}</td>
+
+          <td>
+            <template v-if="editingId === m[0]">
+              <input v-model="editRow.classificacao" />
+            </template>
+            <template v-else>
+              {{ m[2] }}
+            </template>
+          </td>
+
+          <td>{{ m[3] }}</td>
+
+          <td>
+            <template v-if="editingId === m[0]">
+              <button @click="guardarEdicao(m[0])">💾</button>
+              <button @click="cancelarEdicao">❌</button>
+            </template>
+
+            <template v-else>
+              <button @click="editarLinha(m)" :disabled="creating">✏️</button>
+              <button @click="prepararDelete(m[0])">❌</button>
+            </template>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+
+    <!-- PAGINAÇÃO -->
+    <div class="pagination" v-if="totalPages > 1">
+      <button @click="currentPage--" :disabled="currentPage === 1">Anterior</button>
+      <span>Página {{ currentPage }} de {{ totalPages }}</span>
+      <button @click="currentPage++" :disabled="currentPage === totalPages">Seguinte</button>
     </div>
   </div>
 </template>
@@ -149,96 +90,175 @@ export default {
   data() {
     return {
       activeBox: 'listar',
-
       currentPage: 1,
       itemsPerPage: 10,
 
-      // US002 - Lista de Marinheiros
       marinheiros: [],
 
-      // US001 - Registo de Marinheiros
-      novo: {
-        id_marinheiro: '',
-        nome: '',
-        idade: '',
-        classificacao: '',
-      },
+      filtros: { id: '', nome: '', idade: '', classificacao: '' },
 
-      // US003 - Filtro por Classificação
+      editingId: null,
+      editRow: { classificacao: '' },
+
+      creating: false,
+      novoInline: { id_marinheiro: '', nome: '', idade: '', classificacao: '' },
+
+      erroInline: '',
+      mensagemInline: '',
+
+      novo: { id_marinheiro: '', nome: '', idade: '', classificacao: '' },
+
       filtroClassificacao: '',
       marinheirosFiltrados: [],
       erroFiltro: '',
 
-      // US004 - Filtro por ID
       idPesquisa: '',
       marinheiroEncontrado: [],
       erroId: '',
 
-      // US005 - Update
-      update: {
-        id: '',
-        classificacao: '',
-      },
+      update: { id: '', classificacao: '' },
       mensagemUpdate: '',
       erroUpdate: '',
-
-      // US006 - Eliminar
-      idDelete: '',
-      mensagemDelete: '',
-      erroDelete: '',
     }
   },
 
   mounted() {
     this.atualizarLista()
-  },
 
-  computed: {
-    marinheirosPaginados() {
-      const start = (this.currentPage - 1) * this.itemsPerPage
-      return this.marinheiros.slice(start, start + this.itemsPerPage)
-    },
-
-    totalPages() {
-      return Math.max(1, Math.ceil(this.marinheiros.length / this.itemsPerPage))
-    },
+    document.addEventListener('click', this.limparMensagensGlobal)
   },
 
   watch: {
-    marinheiros() {
+    marinheirosFiltradosLocal() {
       this.currentPage = 1
+    },
+  },
+
+  computed: {
+    marinheirosFiltradosLocal() {
+      return this.marinheiros.filter((m) => {
+        if (this.filtros.id && Number(m[0]) !== Number(this.filtros.id)) return false
+        if (this.filtros.nome && !m[1].toLowerCase().includes(this.filtros.nome.toLowerCase()))
+          return false
+        if (this.filtros.idade && Number(m[3]) !== Number(this.filtros.idade)) return false
+        if (this.filtros.classificacao && Number(m[2]) !== Number(this.filtros.classificacao))
+          return false
+        return true
+      })
+    },
+
+    marinheirosPaginados() {
+      const start = (this.currentPage - 1) * this.itemsPerPage
+      return this.marinheirosFiltradosLocal.slice(start, start + this.itemsPerPage)
+    },
+
+    totalPages() {
+      return Math.max(1, Math.ceil(this.marinheirosFiltradosLocal.length / this.itemsPerPage))
     },
   },
 
   methods: {
     toggleBox(box) {
       this.activeBox = box
+      this.erroInline = ''
+      this.mensagemInline = ''
     },
 
-    // US002 - Lista de Marinheiros
-    async atualizarLista() {
-      try {
-        const res = await fetch('/api/marinheiros')
-        this.marinheiros = await res.json()
-      } catch {
-        console.error('Erro ao carregar lista')
+    limparMensagensGlobal() {
+      this.erroInline = ''
+      this.mensagemInline = ''
+    },
+
+    limparMensagensGlobal(event) {
+      const tabela = this.$el
+
+      if (!tabela.contains(event.target)) {
+        this.erroInline = ''
+        this.mensagemInline = ''
       }
     },
 
-    // US001 - Registo de Marinheiros
-    async registarMarinheiro() {
-      const nomeRegex = /^[A-Za-zÀ-ÿ\s]+$/
+    limparFiltros() {
+      this.filtros = { id: '', nome: '', idade: '', classificacao: '' }
+      this.currentPage = 1
+    },
 
-      if (!nomeRegex.test(this.novo.nome)) {
-        alert('Nome inválido. Use apenas letras.')
+    editarLinha(m) {
+      this.erroInline = ''
+      this.mensagemInline = ''
+      this.editingId = m[0]
+      this.editRow.classificacao = m[2]
+    },
+
+    cancelarEdicao() {
+      this.editingId = null
+      this.erroInline = ''
+    },
+
+    async guardarEdicao(id) {
+      this.erroInline = ''
+      this.mensagemInline = ''
+
+      const classNum = Number(this.editRow.classificacao)
+
+      if (!Number.isInteger(classNum) || classNum < 1 || classNum > 10) {
+        this.erroInline = 'Classificação inválida (1-10)'
         return
       }
 
-      // Validação da idade
-      const idadeNum = Number(this.novo.idade)
+      const res = await fetch(`/api/marinheiros/${id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ classificacao: classNum }),
+      })
 
+      if (!res.ok) {
+        this.erroInline = 'Erro ao atualizar'
+        return
+      }
+
+      this.mensagemInline = 'Atualizado com sucesso'
+      this.editingId = null
+      this.atualizarLista()
+    },
+
+    ativarCriacao() {
+      this.erroInline = 'Erro ao criar marinheiro.'
+      this.mensagemInline = 'Marinheiro registado com sucesso.'
+      this.creating = true
+    },
+
+    cancelarCriacao() {
+      this.creating = false
+      this.erroInline = ''
+      this.novoInline = { id_marinheiro: '', nome: '', idade: '', classificacao: '' }
+    },
+
+    async guardarNovoInline() {
+      this.erroInline = ''
+      this.mensagemInline = ''
+
+      const idNum = Number(this.novoInline.id_marinheiro)
+      if (!Number.isInteger(idNum) || idNum <= 0) {
+        this.erroInline = 'ID do marinheiro deve ser um inteiro.'
+        return
+      }
+
+      const nomeRegex = /^[A-Za-zÀ-ÿ\s'-]+$/
+      if (!this.novoInline.nome || !nomeRegex.test(this.novoInline.nome)) {
+        this.erroInline = 'Nome deve conter apenas letras e espaços.'
+        return
+      }
+
+      const idadeNum = Number(this.novoInline.idade)
       if (!Number.isInteger(idadeNum) || idadeNum < 1 || idadeNum > 100) {
-        alert('Idade deve ser um número inteiro entre 1 e 100.')
+        this.erroInline = 'Idade deve ser um inteiro entre 1 e 100.'
+        return
+      }
+
+      const classNum = Number(this.novoInline.classificacao)
+      if (!Number.isInteger(classNum) || classNum < 1 || classNum > 10) {
+        this.erroInline = 'Classificação deve ser um inteiro entre 1 e 10.'
         return
       }
 
@@ -246,128 +266,212 @@ export default {
         const res = await fetch('/api/marinheiros', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(this.novo),
+          body: JSON.stringify({
+            id_marinheiro: idNum,
+            nome: this.novoInline.nome,
+            idade: idadeNum,
+            classificacao: classNum,
+          }),
         })
 
-        let data
+        if (!res.ok) {
+          let erro = 'Erro ao registar marinheiro.'
 
-        try {
-          data = await res.json()
-        } catch {
-          data = null
-        }
-
-        if (res.ok) {
-          alert(data?.message || 'Marinheiro registado!')
-          this.atualizarLista()
-
-          this.novo = {
-            id_marinheiro: '',
-            nome: '',
-            classificacao: '',
-            idade: '',
+          try {
+            const data = await res.json()
+            erro = data.erro || data.message || erro
+          } catch {
+            const texto = await res.text()
+            if (texto) erro = texto
           }
-        } else {
-          alert(data?.error || 'Erro ao registar marinheiro.')
+
+          this.erroInline = erro
+          return
         }
-      } catch (err) {
-        console.error(err)
-        alert('Erro de ligação ao servidor.')
+
+        this.cancelarCriacao()
+        this.mensagemInline = 'Marinheiro criado com sucesso.'
+        this.atualizarLista()
+      } catch {
+        this.erroInline = 'Erro de ligação ao servidor.'
       }
     },
 
-    // US003 - Filtro por Classificação
+    prepararDelete(id) {
+      this.idDelete = id
+      this.activeBox = 'delete'
+    },
+
+    async atualizarLista() {
+      try {
+        const res = await fetch('/api/marinheiros')
+        this.marinheiros = await res.json()
+
+        if (this.currentPage > this.totalPages) {
+          this.currentPage = this.totalPages
+        }
+      } catch {
+        console.error('Erro ao carregar lista')
+      }
+    },
+
+    async registarMarinheiro() {
+      const idNum = Number(this.novo.id_marinheiro)
+      if (!Number.isInteger(idNum) || idNum <= 0) {
+        alert('ID inválido')
+        return
+      }
+
+      const nomeRegex = /^[A-Za-zÀ-ÿ\s'-]+$/
+      if (!nomeRegex.test(this.novo.nome)) {
+        alert('Nome inválido')
+        return
+      }
+
+      const idadeNum = Number(this.novo.idade)
+      if (!Number.isInteger(idadeNum) || idadeNum < 1 || idadeNum > 100) {
+        alert('Idade inválida')
+        return
+      }
+
+      const classNum = Number(this.novo.classificacao)
+      if (!Number.isInteger(classNum) || classNum < 1 || classNum > 10) {
+        alert('Classificação inválida')
+        return
+      }
+
+      try {
+        const res = await fetch('/api/marinheiros', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            id_marinheiro: idNum,
+            nome: this.novo.nome,
+            idade: idadeNum,
+            classificacao: classNum,
+          }),
+        })
+
+        if (!res.ok) {
+          alert('Erro ao registar')
+          return
+        }
+
+        alert('Registado com sucesso')
+        this.novo = { id_marinheiro: '', nome: '', idade: '', classificacao: '' }
+        this.atualizarLista()
+      } catch {
+        alert('Erro de ligação')
+      }
+    },
+
     async listarPorClassificacao() {
       this.erroFiltro = ''
       this.marinheirosFiltrados = []
 
+      const classNum = Number(this.filtroClassificacao)
+
+      if (!Number.isInteger(classNum) || classNum < 1 || classNum > 10) {
+        this.erroFiltro = 'Classificação inválida (1-10)'
+        return
+      }
+
       try {
-        const res = await fetch(
-          `/api/marinheiros/classificacao?classificacao=${this.filtroClassificacao}`,
-        )
-        if (res.ok) {
-          this.marinheirosFiltrados = await res.json()
-        } else {
-          this.erroFiltro = 'Nenhum Marinheiro encontrado'
+        const res = await fetch(`/api/marinheiros/classificacao/${classNum}`)
+
+        if (!res.ok) {
+          this.erroFiltro = 'Erro ao filtrar'
+          return
         }
+
+        this.marinheirosFiltrados = await res.json()
       } catch {
         this.erroFiltro = 'Erro de ligação'
       }
     },
 
-    // US004 - Filtro por ID
     async procurarPorId() {
       this.erroId = ''
       this.marinheiroEncontrado = []
 
+      const idNum = Number(this.idPesquisa)
+
+      if (!Number.isInteger(idNum) || idNum <= 0) {
+        this.erroId = 'ID inválido'
+        return
+      }
+
       try {
-        const res = await fetch(`/api/marinheiros/${this.idPesquisa}`)
-        if (res.ok) {
-          this.marinheiroEncontrado = await res.json()
-        } else {
-          this.erroId = 'Marinheiro não encontrado'
+        const res = await fetch(`/api/marinheiros/${idNum}`)
+
+        if (!res.ok) {
+          this.erroId = 'Não encontrado'
+          return
         }
+
+        const data = await res.json()
+        this.marinheiroEncontrado = [data]
       } catch {
         this.erroId = 'Erro de ligação'
       }
     },
 
-    // US005 UPDATE
     async atualizarClassificacao() {
+      this.erroUpdate = ''
+      this.mensagemUpdate = ''
+
+      const idNum = Number(this.update.id)
       const classNum = Number(this.update.classificacao)
 
-      // ✔️ validação antes do fetch
+      if (!Number.isInteger(idNum) || idNum <= 0) {
+        this.erroUpdate = 'ID inválido.'
+        return
+      }
+
       if (!Number.isInteger(classNum) || classNum < 1 || classNum > 10) {
-        this.erroUpdate = 'Classificação deve ser um número inteiro entre 1 e 10.'
-        this.mensagemUpdate = ''
+        this.erroUpdate = 'Classificação inválida.'
         return
       }
 
       try {
-        const res = await fetch(`/api/marinheiros/${this.update.id}`, {
+        const res = await fetch(`/api/marinheiros/${idNum}`, {
           method: 'PATCH',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            classificacao: classNum, // ✔️ já convertido
-          }),
+          body: JSON.stringify({ classificacao: classNum }),
         })
 
-        let data
-
-        try {
-          data = await res.json()
-        } catch {
-          data = null
+        if (!res.ok) {
+          this.erroUpdate = 'Erro ao atualizar.'
+          return
         }
 
-        if (res.ok) {
-          this.mensagemUpdate = data?.message || 'Atualizado com sucesso.'
-          this.erroUpdate = ''
-          this.atualizarLista()
-        } else {
-          this.erroUpdate = data?.error || 'Erro ao atualizar.'
-          this.mensagemUpdate = ''
-        }
-      } catch (err) {
-        console.error(err)
-        this.erroUpdate = 'Erro de ligação ao servidor.'
-        this.mensagemUpdate = ''
+        this.mensagemUpdate = 'Atualizado com sucesso.'
+        this.atualizarLista()
+      } catch {
+        this.erroUpdate = 'Erro de ligação.'
       }
     },
+    async prepararDelete(id) {
+      this.erroInline = ''
+      this.mensagemInline = ''
 
-    // US006 ELIMINAR
-    async eliminarMarinheiro() {
-      const res = await fetch(`/api/marinheiros/${this.idDelete}`, {
-        method: 'DELETE',
-      })
+      const confirmacao = confirm('Tens a certeza que queres eliminar este marinheiro?')
+      if (!confirmacao) return
 
-      const data = await res.json()
+      try {
+        const res = await fetch(`/api/marinheiros/${id}`, {
+          method: 'DELETE',
+        })
 
-      if (res.ok) {
-        this.mensagemDelete = data.message
+        if (!res.ok) {
+          this.erroInline = 'Marinheiro tem reservas associadas.'
+          return
+        }
+
+        this.mensagemInline = 'Marinheiro eliminado com sucesso'
         this.atualizarLista()
-      } else {
-        this.erroDelete = data.error
+      } catch {
+        this.erroInline = 'Erro de ligação'
       }
     },
   },
@@ -375,6 +479,97 @@ export default {
 </script>
 
 <style>
+/* LAYOUT */
+.page {
+  width: 100vw;
+  margin-left: calc(-50vw + 50%);
+  display: flex;
+  justify-content: center;
+}
+
+/* TABELA */
+.table-box {
+  width: 100%;
+  max-width: 1200px;
+  margin: 0 auto; /* CENTRO REAL */
+  background: white;
+  padding: 20px;
+  border-radius: 10px;
+  overflow-x: auto;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  min-width: 700px;
+}
+
+th,
+td {
+  padding: 10px;
+  text-align: center;
+  white-space: nowrap;
+  border-bottom: 1px solid #ddd;
+}
+
+td button {
+  margin: 0 4px;
+}
+
+/* FILTROS */
+.filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-bottom: 15px;
+  justify-content: center;
+}
+
+.filters input {
+  flex: 1 1 150px;
+  max-width: 200px;
+  padding: 6px;
+}
+
+/* BOTÕES */
+button {
+  cursor: pointer;
+}
+
+.clear {
+  background: #999;
+  color: white;
+  border: none;
+  padding: 6px 10px;
+  border-radius: 6px;
+}
+
+.add {
+  margin-left: 10px;
+  background: #4caf50;
+  color: white;
+  border: none;
+  padding: 6px 10px;
+  border-radius: 6px;
+}
+
+.danger {
+  background: #b00020;
+  color: white;
+}
+
+/* MENSAGENS */
+.erro {
+  color: red;
+  text-align: center;
+}
+
+.sucesso {
+  color: green;
+  text-align: center;
+}
+
+/* PAGINAÇÃO */
 .pagination {
   margin-top: 15px;
   display: flex;
@@ -382,134 +577,12 @@ export default {
   gap: 15px;
 }
 
-.pagination button {
-  padding: 8px 12px;
-  border-radius: 6px;
-  border: none;
-  background: #2c5364;
-  color: white;
-  cursor: pointer;
-}
-
-.pagination button:disabled {
-  background: #ccc;
-  cursor: not-allowed;
-}
-
-.page {
-  display: grid;
-  grid-template-columns: 3fr 1fr;
-  gap: 30px;
-  padding: 30px;
-}
-
-/* ESQUERDA */
-.main {
-  flex: 3;
-  position: relative;
-  z-index: 1;
-}
-
-/* HEADER */
-.header-box {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-
-  margin-bottom: 20px;
-}
-
-.header-box h1 {
-  font-size: 28px;
-}
-
-/* TABELA */
-.table-box {
-  background: white;
-  padding: 20px;
-  border-radius: 12px;
-  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
-}
-
-table {
-  width: 100%;
-  border-collapse: collapse;
-}
-
-th {
-  background: #f4f4f4;
-}
-
-th,
-td {
-  padding: 10px;
-  text-align: center;
-  border-bottom: 1px solid #eee;
-}
-
-/* SIDEBAR */
-.sidebar {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  gap: 20px;
-
-  justify-content: center;
-}
-
-/* CARDS */
-.card {
-  background: white;
-  padding: 20px;
-  border-radius: 12px;
-
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-
-  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
-}
-
-.card h3 {
-  margin-bottom: 10px;
-}
-
-/* INPUTS */
-input {
-  padding: 8px;
-  border-radius: 6px;
-  border: 1px solid #ccc;
-}
-
-/* BOTÕES */
-button {
-  background: #2c5364;
-  color: white;
-  border: none;
-  padding: 10px;
-  border-radius: 8px;
-  cursor: pointer;
-}
-
-button:hover {
-  background: #203a43;
-}
-
-/* BOTÃO PRINCIPAL */
-.primary {
-  background: #ff9800;
-}
-
-.primary:hover {
-  background: #e68900;
-}
-
-/* DELETE */
-.danger button {
-  background: #c62828;
-}
-
-.danger button:hover {
-  background: #a61b1b;
+/* RESPONSIVO */
+@media (max-width: 768px) {
+  th,
+  td {
+    font-size: 12px;
+    padding: 6px;
+  }
 }
 </style>
