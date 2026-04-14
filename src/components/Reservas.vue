@@ -418,6 +418,9 @@ export default {
       const confirmacao = confirm('Cancelar esta reserva?')
       if (!confirmacao) return
 
+      this.erroInline = ''
+      this.mensagemInline = ''
+
       const payload = {
         id_marinheiro: r.ID_MARINHEIRO,
         id_barco: r.ID_BARCO,
@@ -431,14 +434,25 @@ export default {
           body: JSON.stringify(payload),
         })
 
+        let dados = {}
+        try {
+          dados = await res.json()
+        } catch {}
+
         if (res.ok) {
+          // ✔️ SUCESSO
+          this.mensagemInline = 'Reserva apagada com sucesso'
+
+          setTimeout(() => {
+            this.mensagemInline = ''
+          }, 3000)
+
           await this.listarTodasReservas()
         } else {
-          const dados = await res.json()
-          alert(dados.error || 'Erro ao cancelar')
+          this.erroInline = dados.error || 'Erro ao apagar reserva'
         }
       } catch {
-        alert('Erro de ligação')
+        this.erroInline = 'Erro de ligação ao servidor'
       }
     },
   },
