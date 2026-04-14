@@ -1,38 +1,125 @@
-# vue-project-barcos-frontend
+# Web API - Gestão de Barcos - FRONTEND
 
-This template should help get you started developing with Vue 3 in Vite.
+## Descrição
+Este projeto consiste no desenvolvimento do Frontend em Vue.js para a aplicação de gestão de reservas de barcos.
 
-## Recommended IDE Setup
+A aplicação permite a interação com a Web API em Node.js, possibilitando:
 
-[VS Code](https://code.visualstudio.com/) + [Vue (Official)](https://marketplace.visualstudio.com/items?itemName=Vue.volar) (and disable Vetur).
+* Gestão de marinheiros
+* Gestão de barcos
+* Criação e gestão de reservas
+_________________________________________________________________________________________
 
-## Recommended Browser Setup
+## Tecnologias utilizadas
 
-- Chromium-based browsers (Chrome, Edge, Brave, etc.):
-  - [Vue.js devtools](https://chromewebstore.google.com/detail/vuejs-devtools/nhdogjmejiglipccpnnnanhbledajbpd)
-  - [Turn on Custom Object Formatter in Chrome DevTools](http://bit.ly/object-formatters)
-- Firefox:
-  - [Vue.js devtools](https://addons.mozilla.org/en-US/firefox/addon/vue-js-devtools/)
-  - [Turn on Custom Object Formatter in Firefox DevTools](https://fxdx.dev/firefox-devtools-custom-object-formatters/)
+* Vue.js
+* JavaScript
+* HTML5
+* CSS3
+_________________________________________________________________________________________________________________________
 
-## Customize configuration
+## Estrutura do projeto
 
-See [Vite Configuration Reference](https://vite.dev/config/).
+web-api-barcos-frontend/
+│
+├── public/
+│   ├── images/
+│   └── favicon.ico
+│
+├── src/
+│   ├── components/
+│   │   ├── Barcos.vue
+│   │   ├── Home.vue
+│   │   ├── Marinheiros.vue
+│   │   └── Reservas.vue
+│   │
+│   ├── router/
+│   │   └── index.js
+│   │
+│   ├── views/
+│   ├── App.vue
+│   └── main.js
+│
+├── index.html
+├── package.json
+├── vite.config.js
+└── README.md
+_________________________________________________________________________________________________________________________
 
-## Project Setup
+## Como executar o projeto
 
-```sh
+1. Instalar dependências:
+
+```
 npm install
 ```
 
-### Compile and Hot-Reload for Development
+2. Executar o servidor:
 
-```sh
+```
 npm run dev
 ```
 
-### Compile and Minify for Production
+3. A API ficará disponível em:
 
-```sh
-npm run build
 ```
+http://localhost:5173
+```
+_________________________________________________________________________________________________________________________
+
+## Principais Funcionalidades
+
+### Marinheiros
+
+* Criar marinheiro
+* Listar todos os marinheiros
+* Filtrar por classificação
+* Obter marinheiro por ID
+* Atualizar classificação
+* Eliminar marinheiro
+
+---
+
+### Barcos
+
+* Criar barco
+* Listar barcos
+* Listar barcos disponíveis
+
+---
+
+### Reservas
+
+* Criar reserva
+* Listar reservas de um marinheiro
+* Cancelar reserva futura
+_________________________________________________________________________________________________________________________
+
+## Regras implementadas
+
+* Validação de campos obrigatórios antes de envio para a API;
+* Validação de formatos (ex: datas);
+* Apresentação de mensagens de erro e sucesso;
+* Tratamento de respostas da API;
+* Interface consistente com as regras de negócio definidas no backend.
+_________________________________________________________________________________________________________________________
+
+## Testes
+
+Os testes foram realizados através da interface da aplicação, garantindo:
+
+* Validação de inputs
+* Comunicação correta com a API
+* Tratamento de erros
+_________________________________________________________________________________________________________________________
+
+## Notas
+* O frontend não implementa autenticação nem autorização;
+* Assume-se a existência de diferentes tipos de utilizadores:
+    * Gestor: gere marinheiros e barcos;
+    * Marinheiro: consulta barcos e gere reservas;
+_________________________________________________________________________________________________________________________
+
+## Autor
+
+Catarina Soares - 902508016 | UP25T08 – Desenvolvimento Web – PL/SQL
