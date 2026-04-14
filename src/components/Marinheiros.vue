@@ -1,9 +1,10 @@
 <template>
   <div class="table-box">
+    <h3 class="page-title">VISTA GERAL DA TRIPULAÇÃO</h3>
     <!-- FILTROS -->
     <div class="filters">
       <input v-model="filtros.id" placeholder="ID" />
-      <input v-model="filtros.nome" placeholder="Nome..." />
+      <input v-model="filtros.nome" placeholder="Nome" />
       <input v-model="filtros.classificacao" placeholder="Classificação" />
       <input v-model="filtros.idade" placeholder="Idade" />
       <button class="clear" @click="limparFiltros">Limpar filtros</button>
@@ -20,7 +21,7 @@
             <div class="acoes-header">
               <span>Ações</span>
               <button class="add" @click="ativarCriacao" :disabled="creating">+</button>
-              <span class="novo-texto">Novo</span>
+              <span class="novo-texto">Criar Marinheiro</span>
             </div>
           </th>
         </tr>
@@ -34,8 +35,8 @@
           <td><input v-model="novoInline.classificacao" /></td>
           <td><input v-model="novoInline.idade" /></td>
           <td>
-            <button @click="guardarNovoInline">💾</button>
-            <button @click="cancelarCriacao">❌</button>
+            <button @click="guardarNovoInline">💾 Guardar</button>
+            <button @click="cancelarCriacao">❌ Cancelar</button>
           </td>
         </tr>
 
@@ -66,13 +67,13 @@
 
           <td>
             <template v-if="editingId === m[0]">
-              <button @click="guardarEdicao(m[0])">💾</button>
-              <button @click="cancelarEdicao">❌</button>
+              <button @click="guardarEdicao(m[0])">💾 Guardar</button>
+              <button @click="cancelarEdicao">❌ Cancelar </button>
             </template>
 
             <template v-else>
-              <button @click="editarLinha(m)" :disabled="creating">✏️</button>
-              <button @click="prepararDelete(m[0])">❌</button>
+              <button @click="editarLinha(m)" :disabled="creating"> Editar ✏️</button>
+              <button @click="prepararDelete(m[0])">❌ Eliminar Marinheiro </button>
             </template>
           </td>
         </tr>
@@ -278,7 +279,7 @@ export default {
         })
 
         if (!res.ok) {
-          let erro = 'Erro ao registar marinheiro.'
+          let erro = 'Erro ao registar marinheiro, id já existe.'
 
           try {
             const data = await res.json()
@@ -482,43 +483,131 @@ export default {
 </script>
 
 <style>
-/* LAYOUT */
+/* ===== LAYOUT BASE ===== */
 .page {
   width: 100vw;
   margin-left: calc(-50vw + 50%);
   display: flex;
   justify-content: center;
+  padding: 30px;
+  font-family: sans-serif;
 }
 
-/* TABELA */
-.table-box {
+.main {
   width: 100%;
   max-width: 1200px;
-  margin: 0 auto; /* CENTRO REAL */
+  margin: 0 auto;
+}
+
+/* ===== CARD / CONTAINER ===== */
+.table-box,
+.card {
   background: white;
   padding: 20px;
   border-radius: 10px;
-  overflow-x: auto;
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
 }
 
+/* ===== TABELA ===== */
 table {
   width: 100%;
   border-collapse: collapse;
   min-width: 700px;
 }
 
-th,
-td {
+th, td {
   padding: 10px;
   text-align: center;
+  border-bottom: 1px solid #eee;
   white-space: nowrap;
-  border-bottom: 1px solid #ddd;
 }
 
 td button {
-  margin: 0 4px;
+  margin: 0 5px;
 }
 
+th {
+  background: #f8f9fa;
+  font-weight: bold;
+}
+
+/* ===== FILTROS ===== */
+.filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-bottom: 15px;
+  justify-content: center;
+}
+
+.filters input {
+  flex: 1 1 150px;
+  max-width: 200px;
+  padding: 6px;
+  border-radius: 6px;
+  border: 1px solid #ccc;
+}
+
+.filters button {
+  padding: 6px 10px;
+  border-radius: 6px;
+}
+
+/* ===== INPUTS GERAIS ===== */
+input {
+  padding: 8px;
+  border-radius: 6px;
+  border: 1px solid #ccc;
+}
+
+/* ===== BOTÕES ===== */
+button {
+  background: #2c5364;
+  color: white;
+  border: none;
+  padding: 6px 10px;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+button:hover {
+  background: #203a43;
+}
+
+button:disabled {
+  background: #ccc;
+  cursor: not-allowed;
+}
+
+/* ===== VARIAÇÕES ===== */
+.primary {
+  background: #ff9800;
+}
+.primary:hover {
+  background: #e68900;
+}
+
+.add {
+  background: #4caf50;
+}
+
+.add:hover {
+  background: #3d9442;
+}
+
+.danger {
+  background: #c62828;
+}
+
+.danger:hover {
+  background: #a61b1b;
+}
+
+.clear {
+  background: #999;
+}
+
+/* ===== AÇÕES HEADER ===== */
 .acoes-header {
   display: flex;
   align-items: center;
@@ -532,60 +621,14 @@ td button {
   font-weight: 500;
 }
 
-/* FILTROS */
-.filters {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 10px;
-  margin-bottom: 15px;
-  justify-content: center;
-}
-
-.filters input {
-  flex: 1 1 150px;
-  max-width: 200px;
+/* ===== INPUTS INLINE (TABELA) ===== */
+td input {
+  width: 100%;
   padding: 6px;
+  font-size: 13px;
 }
 
-/* BOTÕES */
-button {
-  cursor: pointer;
-}
-
-.clear {
-  background: #999;
-  color: white;
-  border: none;
-  padding: 6px 10px;
-  border-radius: 6px;
-}
-
-.add {
-  margin-left: 10px;
-  background: #4caf50;
-  color: white;
-  border: none;
-  padding: 6px 10px;
-  border-radius: 6px;
-}
-
-.danger {
-  background: #b00020;
-  color: white;
-}
-
-/* MENSAGENS */
-.erro {
-  color: red;
-  text-align: center;
-}
-
-.sucesso {
-  color: green;
-  text-align: center;
-}
-
-/* PAGINAÇÃO */
+/* ===== PAGINAÇÃO ===== */
 .pagination {
   margin-top: 15px;
   display: flex;
@@ -593,10 +636,27 @@ button {
   gap: 15px;
 }
 
-/* RESPONSIVO */
+/* ===== MENSAGENS ===== */
+.alert {
+  padding: 10px;
+  border-radius: 6px;
+  margin-bottom: 10px;
+  font-weight: bold;
+}
+
+.alert.sucesso {
+  background: #e6f4ea;
+  color: #2e7d32;
+}
+
+.alert.erro {
+  background: #fdecea;
+  color: #c62828;
+}
+
+/* ===== RESPONSIVO ===== */
 @media (max-width: 768px) {
-  th,
-  td {
+  th, td {
     font-size: 12px;
     padding: 6px;
   }

@@ -1,91 +1,99 @@
 <template>
-  <div class="table-box">
-    <!-- FILTROS -->
-    <div class="filters">
-      <input v-model="idPesquisa" placeholder="ID Marinheiro" @input="filtrarReservas" />
-      <input v-model="idBarcoPesquisa" placeholder="ID Barco" @input="filtrarReservas" />
-      <button class="clear" @click="listarTodasReservas">Lista Completa de Reservas</button>
-      <button class="clear" @click="listarDisponiveis">Ver Barcos Disponíveis para Reserva</button>
-    </div>
+  <div class="page">
+    <div class="main">
 
-    <table>
-      <thead>
-        <tr>
-          <th>Data</th>
-          <th>ID Barco</th>
-          <th>Nome Barco</th>
-          <th>Cor</th>
-          <th>ID Marinheiro</th>
-          <th>Nome Marinheiro</th>
-          <th>
-            <div class="acoes-header">
-              <span></span>
+      <!-- LISTAR RESERVAS -->
+      <div v-if="activeBox === 'listar'" class="table-box">
+        <h3 class="page-title">VISTA GERAL DAS RESERVAS</h3>
 
-              <span class="novo-texto">
-                {{ tipoPesquisa === 'disponiveis' ? 'Efetuar Reserva' : 'Apagar Reserva' }}
-              </span>
-            </div>
-          </th>
-        </tr>
-      </thead>
+        <p v-if="loadingReservas">A carregar reservas...</p>
 
-      <tbody>
-        <!-- MENSAGENS -->
-        <tr v-if="erroInline">
-          <td colspan="7" class="erro">{{ erroInline }}</td>
-        </tr>
+        <!-- TOPO (BOTÃO + FILTROS) -->
+        <div class="filters" v-if="tipoPesquisa === 'todas'">
+          <button @click="listarTodasReservas">Ver Todas as Reservas</button>
 
-        <tr v-if="mensagemInline">
-          <td colspan="7" class="sucesso">{{ mensagemInline }}</td>
-        </tr>
+          <input v-model="filtros.data" placeholder="Data (dd/mm/aaaa)" />
+          <input v-model="filtros.id_barco" placeholder="ID Barco" />
+          <input v-model="filtros.nome_barco" placeholder="Nome Barco" />
+          <input v-model="filtros.cor" placeholder="Cor" />
+          <input v-model="filtros.id_marinheiro" placeholder="ID Marinheiro" />
+          <input v-model="filtros.nome_marinheiro" placeholder="Nome Marinheiro" />
 
-        <!-- LISTA -->
-        <tr v-for="r in reservasPaginadas" :key="r.ID_BARCO + r.DATA">
-          <!-- LINHA EM MODO CRIAÇÃO -->
-          <template v-if="creating && reserva.id_barco === r.ID_BARCO">
-            <td><input type="date" v-model="reserva.data" /></td>
-            <td>{{ r.ID_BARCO }}</td>
-            <td>{{ r.NOME_BARCO }}</td>
-            <td>{{ r.COR }}</td>
-            <td><input v-model="reserva.id_marinheiro" /></td>
-            <td>-</td>
-            <td>
-              <button @click="reservarBarco">Guardar</button>
-              <button @click="cancelarCriacao">Cancelar</button>
-            </td>
-          </template>
+          <button @click="limparFiltros">Limpar</button>
+        </div>
 
-          <!-- LINHA NORMAL -->
-          <template v-else>
-            <td>{{ formatarData(r.DATA) }}</td>
-            <td>{{ r.ID_BARCO }}</td>
-            <td>{{ r.NOME_BARCO }}</td>
-            <td>{{ r.COR }}</td>
-            <td>{{ r.ID_MARINHEIRO }}</td>
-            <td>{{ r.NOME_MARINHEIRO }}</td>
+        <!-- MENSAGEM -->
+        <div v-if="mensagem" :class="['alert', tipoMensagem]">
+          {{ mensagem }}
+        </div>
 
-            <td>
-              <!-- DISPONÍVEIS -->
-              <button
-                v-if="tipoPesquisa === 'disponiveis'"
-                @click="ativarCriacaoComBarco(r.ID_BARCO)"
-              >
-                +
-              </button>
+        <!-- TABELA -->
+        <table v-if="reservasFiltradas.length > 0">
+          <thead>
+            <tr>
+              <th>Data</th>
+              <th>ID Barco</th>
+              <th>Nome Barco</th>
+              <th>Cor</th>
+              <th>ID Marinheiro</th>
+              <th>Nome Marinheiro</th>
 
-              <!-- RESERVAS -->
-              <button v-else @click="cancelarReservaInline(r)">❌</button>
-            </td>
-          </template>
-        </tr>
-      </tbody>
-    </table>
+              <!-- AÇÕES -->
+              <th>
+                Ações
+                <button @click="novoInline = true" class="btn-add">+</button>
+                <span style="color: green; margin-left: 5px">Nova Reserva</span>
+              </th>
+            </tr>
+          </thead>
 
-    <!-- PAGINAÇÃO -->
-    <div class="pagination" v-if="totalPages > 1">
-      <button @click="currentPage--" :disabled="currentPage === 1">Anterior</button>
-      <span>Página {{ currentPage }} de {{ totalPages }}</span>
-      <button @click="currentPage++" :disabled="currentPage === totalPages">Seguinte</button>
+          <tbody>
+
+            <!-- LINHA NOVA RESERVA -->
+            <tr v-if="novoInline">
+              <td><input type="date" v-model="novaReserva.DATA" /></td>
+              <td><input type="number" v-model="novaReserva.ID_BARCO" /></td>
+              <td>-</td>
+              <td>-</td>
+              <td><input type="number" v-model="novaReserva.ID_MARINHEIRO" /></td>
+              <td>-</td>
+
+              <td>
+                <button @click="guardarNovoInline">✔</button>
+                <button @click="novoInline = false">✖</button>
+              </td>
+            </tr>
+
+            <!-- LISTA -->
+            <tr v-for="r in reservasPaginadas" :key="r.ID_BARCO + r.DATA + r.ID_MARINHEIRO">
+              <td>{{ formatarData(r.DATA) }}</td>
+              <td>{{ r.ID_BARCO }}</td>
+              <td>{{ r.NOME_BARCO }}</td>
+              <td>{{ r.COR }}</td>
+              <td>{{ r.ID_MARINHEIRO }}</td>
+              <td>{{ r.NOME_MARINHEIRO }}</td>
+
+              <!-- DELETE -->
+              <td>
+                <button class="btn-delete" @click="cancelarInline(r)">
+                  X Apagar Reserva
+                </button>
+              </td>
+            </tr>
+
+          </tbody>
+        </table>
+
+        <p v-else-if="!loadingReservas">Sem resultados.</p>
+
+        <!-- PAGINAÇÃO -->
+        <div class="pagination" v-if="totalPages > 1">
+          <button @click="currentPage--" :disabled="currentPage === 1">Anterior</button>
+          <span>Página {{ currentPage }} de {{ totalPages }}</span>
+          <button @click="currentPage++" :disabled="currentPage === totalPages">Seguinte</button>
+        </div>
+
+      </div>
     </div>
   </div>
 </template>
@@ -94,285 +102,130 @@
 export default {
   data() {
     return {
+      mensagem: '',
+      tipoMensagem: '', // 'sucesso' ou 'erro'
+
+      loadingReservas: false,
+      activeBox: 'listar',
+      modoCriar: false,
       currentPage: 1,
       itemsPerPage: 10,
+      cacheReservas: [],
 
-      // CONTROLO
-      mostrarDisponiveis: false,
-      creating: false,
-      erroInline: '',
-      mensagemInline: '',
-
-      // US010 - Reservar Barco
-      reserva: {
-        id_marinheiro: '',
-        id_barco: '',
-        data: '',
-      },
-
-      // US011 - Listar Reservas
       reservas: [],
-      idPesquisa: '',
-      idBarcoPesquisa: '',
       tipoPesquisa: 'todas',
 
-      // US012 - Cancelar Reserva
-      cancelar: {
-        id_marinheiro: '',
-        id_barco: '',
+      // FILTROS
+      filtros: {
         data: '',
+        id_barco: '',
+        nome_barco: '',
+        cor: '',
+        id_marinheiro: '',
+        nome_marinheiro: '',
+      },
+
+      // NOVO INLINE
+      novoInline: false,
+      novaReserva: {
+        ID_BARCO: '',
+        ID_MARINHEIRO: '',
+        DATA: '',
       },
     }
   },
 
-  async mounted() {
-    await this.listarTodasReservas()
+  mounted() {
+    const modo = this.$route.query.modo
+
+    if (modo === 'criar') {
+      this.activeBox = 'listar'
+
+      // PRIMEIRO carregar dados
+      this.listarTodasReservas().then(() => {
+        // DEPOIS ativar linha nova
+        this.novoInline = true
+
+        this.novaReserva.ID_BARCO = this.$route.query.id_barco || ''
+        this.novaReserva.DATA = this.$route.query.data || ''
+
+        // opcional: scroll
+        this.$nextTick(() => {
+          const el = document.querySelector('table')
+          if (el) el.scrollIntoView({ behavior: 'smooth' })
+        })
+      })
+    } else {
+      this.listarTodasReservas()
+    }
+
+    this.preloadReservas()
   },
 
   computed: {
+    // ✅ FILTROS
+    reservasFiltradas() {
+      return this.reservas.filter((r) => {
+        return (
+          (!this.filtros.data || this.formatarData(r.DATA).includes(this.filtros.data)) &&
+          (!this.filtros.id_barco || r.ID_BARCO.toString().includes(this.filtros.id_barco)) &&
+          (!this.filtros.nome_barco ||
+            r.NOME_BARCO.toLowerCase().includes(this.filtros.nome_barco.toLowerCase())) &&
+          (!this.filtros.cor || r.COR.toLowerCase().includes(this.filtros.cor.toLowerCase())) &&
+          (!this.filtros.id_marinheiro ||
+            r.ID_MARINHEIRO.toString().includes(this.filtros.id_marinheiro)) &&
+          (!this.filtros.nome_marinheiro ||
+            r.NOME_MARINHEIRO.toLowerCase().includes(this.filtros.nome_marinheiro.toLowerCase()))
+        )
+      })
+    },
+
+    // ✅ PAGINAÇÃO
     reservasPaginadas() {
       const start = (this.currentPage - 1) * this.itemsPerPage
-      return this.reservas.slice(start, start + this.itemsPerPage)
+      return this.reservasFiltradas.slice(start, start + this.itemsPerPage)
     },
 
     totalPages() {
-      return Math.max(1, Math.ceil(this.reservas.length / this.itemsPerPage))
+      return Math.ceil(this.reservasFiltradas.length / this.itemsPerPage) || 1
     },
   },
 
   methods: {
-    // ATIVAR CRIAÇÃO (HEADER)
-    ativarCriacao() {
-      if (this.tipoPesquisa !== 'disponiveis') return
-
-      this.creating = true
-      this.erroInline = ''
-      this.mensagemInline = ''
-
-      this.reserva = {
-        id_marinheiro: '',
-        id_barco: '',
-        data: '',
-      }
-    },
-
-    // ATIVAR CRIAÇÃO COM BARCO (LINHA)
-    ativarCriacaoComBarco(idBarco) {
-      if (this.tipoPesquisa !== 'disponiveis') return
-
-      this.creating = true
-      this.erroInline = ''
-      this.mensagemInline = ''
-
-      this.reserva = {
-        id_marinheiro: '',
-        id_barco: idBarco, // 🔥 aqui fica já preenchido corretamente
-        data: '',
-      }
-    },
-
-    cancelarCriacao() {
-      this.creating = false
-      this.erroInline = ''
-      this.mensagemInline = ''
-
-      this.reserva = {
-        id_marinheiro: '',
-        id_barco: '',
-        data: '',
-      }
-    },
-
-    // US009 - DISPONÍVEIS
-    async listarDisponiveis() {
-      const res = await fetch('/api/barcos/disponiveis')
-
-      let dados = []
+    async preloadReservas() {
       try {
-        dados = await res.json()
+        const res = await fetch('/api/reservas')
+        const dados = await res.json()
+        if (res.ok) this.cacheReservas = dados
       } catch {}
-
-      if (res.ok) {
-        this.tipoPesquisa = 'disponiveis'
-        this.creating = false
-
-        this.reservas = dados.map((b) => ({
-          DATA: null,
-          ID_BARCO: b[0],
-          NOME_BARCO: b[1],
-          COR: b[2],
-          ID_MARINHEIRO: null,
-          NOME_MARINHEIRO: null,
-        }))
-
-        this.currentPage = 1
-      } else {
-        this.reservas = []
-        alert(dados.error || 'Nenhum barco disponível')
-      }
     },
 
-    // US011 - TODAS AS RESERVAS
     async listarTodasReservas() {
-      this.tipoPesquisa = 'todas'
-      this.creating = false
-
-      //  LIMPA IMEDIATAMENTE A UI
-      this.reservas = []
-
-      this.reserva = {
-        id_marinheiro: '',
-        id_barco: '',
-        data: '',
-      }
-
-      this.idPesquisa = ''
-      this.idBarcoPesquisa = ''
+      this.loadingReservas = true
+      this.currentPage = 1
 
       try {
         const res = await fetch('/api/reservas')
-
-        let dados = []
-        try {
-          dados = await res.json()
-        } catch {}
+        const dados = await res.json()
 
         if (res.ok) {
           this.reservas = dados
-          this.currentPage = 1
         } else {
           alert(dados.error || 'Erro ao listar reservas')
         }
       } catch {
         alert('Erro de ligação')
+      } finally {
+        this.loadingReservas = false
       }
     },
 
-    // FILTRO
-    async filtrarReservas() {
-      this.creating = false
-
-      const idMarinheiro = Number(this.idPesquisa)
-      const idBarco = Number(this.idBarcoPesquisa)
-
-      const temMarinheiro = Number.isInteger(idMarinheiro) && idMarinheiro > 0
-      const temBarco = Number.isInteger(idBarco) && idBarco > 0
-
-      if (temMarinheiro && temBarco) {
-        this.tipoPesquisa = 'marinheiro'
-
-        try {
-          const res = await fetch(`/api/reservas/marinheiro/${idMarinheiro}`)
-
-          let dados = []
-          try {
-            dados = await res.json()
-          } catch {}
-
-          if (!res.ok) {
-            this.reservas = []
-            return
-          }
-
-          this.reservas = dados.filter((r) => r.ID_BARCO === idBarco)
-          this.currentPage = 1
-          return
-        } catch {
-          this.reservas = []
-          return
-        }
-      }
-
-      if (temMarinheiro) return this.listarReservas()
-      if (temBarco) return this.listarReservasPorBarco()
-
-      return this.listarTodasReservas()
-    },
-
-    // MARINHEIRO
-    async listarReservas() {
-      this.tipoPesquisa = 'marinheiro'
-      this.creating = false
-
-      const id = Number(this.idPesquisa)
-
-      if (!Number.isInteger(id) || id <= 0) {
-        this.reservas = []
-        return
-      }
-
-      try {
-        const res = await fetch(`/api/reservas/marinheiro/${id}`)
-
-        let dados = []
-        try {
-          dados = await res.json()
-        } catch {}
-
-        if (!res.ok) {
-          this.reservas = []
-          return
-        }
-
-        this.reservas = dados
-        this.currentPage = 1
-      } catch {
-        this.reservas = []
-      }
-    },
-
-    // BARCO
-    async listarReservasPorBarco() {
-      this.tipoPesquisa = 'barco'
-      this.creating = false
-
-      const id = Number(this.idBarcoPesquisa)
-
-      if (!Number.isInteger(id) || id <= 0) {
-        this.reservas = []
-        return
-      }
-
-      try {
-        const res = await fetch(`/api/reservas/barco/${id}`)
-
-        let dados = []
-        try {
-          dados = await res.json()
-        } catch {}
-
-        if (!res.ok) {
-          this.reservas = []
-          return
-        }
-
-        this.reservas = dados
-        this.currentPage = 1
-      } catch {
-        this.reservas = []
-      }
-    },
-
-    formatarData(data) {
-      if (!data) return '-'
-      const d = new Date(data)
-      return isNaN(d) ? '-' : d.toLocaleDateString()
-    },
-
-    // US010 - CRIAR RESERVA
-    async reservarBarco() {
-      this.erroInline = ''
-      this.mensagemInline = ''
-
-      if (!this.reserva.id_marinheiro || !this.reserva.id_barco || !this.reserva.data) {
-        this.erroInline = 'Preenche todos os campos'
-        return
-      }
-
+    // ✅ CRIAR INLINE
+    async guardarNovoInline() {
       const payload = {
-        id_marinheiro: Number(this.reserva.id_marinheiro),
-        id_barco: Number(this.reserva.id_barco),
-        data: this.reserva.data,
+        id_marinheiro: Number(this.novaReserva.ID_MARINHEIRO),
+        id_barco: Number(this.novaReserva.ID_BARCO),
+        data: this.novaReserva.DATA,
       }
 
       try {
@@ -382,44 +235,27 @@ export default {
           body: JSON.stringify(payload),
         })
 
-        let dados = {}
-        try {
-          dados = await res.json()
-        } catch {}
+        const dados = await res.json().catch(() => ({}))
 
         if (res.ok) {
-          this.mensagemInline = 'Reserva criada com sucesso'
+          this.mensagem = 'Reserva criada com sucesso!'
+          this.tipoMensagem = 'sucesso'
 
-          // LIMPAR AUTOMATICAMENTE
-          setTimeout(() => {
-            this.mensagemInline = ''
-          }, 3000)
-          this.creating = false
-
-          this.reserva = {
-            id_marinheiro: '',
-            id_barco: '',
-            data: '',
-          }
-
-          await this.listarTodasReservas()
+          this.novoInline = false
+          this.novaReserva = { ID_BARCO: '', ID_MARINHEIRO: '', DATA: '' }
+          this.listarTodasReservas()
         } else {
-          this.erroInline = dados.error || 'Erro ao criar reserva'
+          this.mensagem = dados.error || 'Erro ao criar reserva'
+          this.tipoMensagem = 'erro'
         }
       } catch {
-        this.erroInline = 'Erro de ligação ao servidor'
+        alert('Erro de ligação')
       }
     },
 
-    // US012 - CANCELAR INLINE
-    async cancelarReservaInline(r) {
-      if (!r.ID_MARINHEIRO || !r.ID_BARCO || !r.DATA) return
-
-      const confirmacao = confirm('Cancelar esta reserva?')
-      if (!confirmacao) return
-
-      this.erroInline = ''
-      this.mensagemInline = ''
+    // DELETE INLINE
+    async cancelarInline(r) {
+      if (!confirm('Cancelar esta reserva?')) return
 
       const payload = {
         id_marinheiro: r.ID_MARINHEIRO,
@@ -434,44 +270,94 @@ export default {
           body: JSON.stringify(payload),
         })
 
-        let dados = {}
-        try {
-          dados = await res.json()
-        } catch {}
+        const dados = await res.json().catch(() => ({}))
 
         if (res.ok) {
-          // ✔️ SUCESSO
-          this.mensagemInline = 'Reserva apagada com sucesso'
+          this.mensagem = 'Reserva cancelada com sucesso!'
+          this.tipoMensagem = 'sucesso'
 
-          setTimeout(() => {
-            this.mensagemInline = ''
-          }, 3000)
-
-          await this.listarTodasReservas()
+          this.listarTodasReservas()
         } else {
-          this.erroInline = dados.error || 'Erro ao apagar reserva'
+          this.mensagem = dados.error || 'Erro ao cancelar'
+          this.tipoMensagem = 'erro'
         }
       } catch {
-        this.erroInline = 'Erro de ligação ao servidor'
+        alert('Erro de ligação')
       }
+    },
+
+    formatarData(data) {
+      if (!data) return ''
+      const d = new Date(data)
+      return d.toLocaleDateString('pt-PT')
+    },
+
+    limparFiltros() {
+      this.filtros = {
+        data: '',
+        id_barco: '',
+        nome_barco: '',
+        cor: '',
+        id_marinheiro: '',
+        nome_marinheiro: '',
+      }
+      this.currentPage = 1
     },
   },
 }
 </script>
 
 <style>
-/* TABELA */
-.table-box {
-  background: white;
-  padding: 20px;
-  border-radius: 12px;
-  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
 
+/* ===== LAYOUT BASE ===== */
+.page {
+  width: 100vw;
+  margin-left: calc(-50vw + 50%);
+  display: flex;
+  justify-content: center;
+  padding: 30px;
+  font-family: sans-serif;
+}
+
+.main {
+  width: 100%;
   max-width: 1200px;
   margin: 0 auto;
 }
 
-/* FILTROS */
+/* ===== CARD / CONTAINER ===== */
+.table-box,
+.card {
+  background: white;
+  padding: 20px;
+  border-radius: 10px;
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+}
+
+/* ===== TABELA ===== */
+table {
+  width: 100%;
+  border-collapse: collapse;
+  min-width: 700px;
+}
+
+th, td {
+  padding: 10px;
+  text-align: center;
+  border-bottom: 1px solid #eee;
+  white-space: nowrap;
+}
+
+td button {
+  margin: 0 5px;
+}
+
+th {
+  background: #f8f9fa;
+  font-weight: bold;
+}
+
+/* ===== FILTROS ===== */
 .filters {
   display: flex;
   flex-wrap: wrap;
@@ -483,102 +369,30 @@ export default {
 .filters input {
   flex: 1 1 150px;
   max-width: 200px;
+  padding: 6px;
+  border-radius: 6px;
+  border: 1px solid #ccc;
 }
 
 .filters button {
   padding: 6px 10px;
-  font-size: 13px;
-}
-
-/* HEADER AÇÕES */
-.acoes-header {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-}
-
-.add {
-  background: #4caf50;
-  padding: 6px 10px;
   border-radius: 6px;
 }
 
-/* 🔥 MELHORIA UX */
-.add:disabled {
-  background: #a5d6a7;
-  cursor: not-allowed;
-}
-
-.novo-texto {
-  font-size: 18px;
-  color: #3454d2;
-  font-weight: 500;
-}
-
-/* BOTÃO LIMPAR */
-.clear {
-  background: #999;
-  padding: 6px 10px;
-  border-radius: 6px;
-}
-
-/* CARDS */
-.card {
-  background: white;
-  padding: 20px;
-  border-radius: 12px;
-
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-
-  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
-
-  margin-top: 20px;
-}
-
-.card h3 {
-  margin-bottom: 10px;
-}
-
-/* FORM */
-.form {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-}
-
-/* INPUTS */
+/* ===== INPUTS GERAIS ===== */
 input {
   padding: 8px;
   border-radius: 6px;
   border: 1px solid #ccc;
-  outline: none;
 }
 
-input:focus {
-  border-color: #999;
-}
-
-/* 🔥 INPUT INLINE (criação) */
-tbody input {
-  width: 100%;
-  box-sizing: border-box;
-}
-
-/* LABELS */
-label {
-  margin-top: 5px;
-}
-
-/* BOTÕES */
+/* ===== BOTÕES ===== */
 button {
   background: #2c5364;
   color: white;
   border: none;
-  padding: 10px;
-  border-radius: 8px;
+  padding: 6px 10px;
+  border-radius: 6px;
   cursor: pointer;
 }
 
@@ -586,52 +400,61 @@ button:hover {
   background: #203a43;
 }
 
-/* BOTÃO PRINCIPAL */
+button:disabled {
+  background: #ccc;
+  cursor: not-allowed;
+}
+
+/* ===== VARIAÇÕES ===== */
 .primary {
   background: #ff9800;
 }
-
 .primary:hover {
   background: #e68900;
 }
 
-/* DELETE */
-.danger button {
+.add {
+  background: #4caf50;
+}
+
+.add:hover {
+  background: #3d9442;
+}
+
+.danger {
   background: #c62828;
 }
 
-.danger button:hover {
+.danger:hover {
   background: #a61b1b;
 }
 
-/* TABELA */
-table {
+.clear {
+  background: #999;
+}
+
+/* ===== AÇÕES HEADER ===== */
+.acoes-header {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+
+.novo-texto {
+  font-size: 12px;
+  color: #4caf50;
+  font-weight: 500;
+}
+
+/* ===== INPUTS INLINE (TABELA) ===== */
+td input {
   width: 100%;
-  border-collapse: collapse;
+  padding: 6px;
+  font-size: 13px;
 }
 
-/* HEADER */
-th {
-  background: #f4f4f4;
-  font-weight: 600;
-}
-
-/* 🔥 MELHORIA IMPORTANTE */
-th,
-td {
-  padding: 10px;
-  text-align: center;
-  border-bottom: 1px solid #eee;
-  white-space: nowrap;
-}
-
-/* 🔥 BOTÕES NA TABELA */
-td button {
-  padding: 6px 10px;
-  border-radius: 6px;
-}
-
-/* PAGINAÇÃO */
+/* ===== PAGINAÇÃO ===== */
 .pagination {
   margin-top: 15px;
   display: flex;
@@ -639,35 +462,29 @@ td button {
   gap: 15px;
 }
 
-.pagination button {
-  padding: 8px 12px;
+/* ===== MENSAGENS ===== */
+.alert {
+  padding: 10px;
   border-radius: 6px;
-  border: none;
-  background: #2c5364;
-  color: white;
-  cursor: pointer;
+  margin-bottom: 10px;
+  font-weight: bold;
 }
 
-.pagination button:disabled {
-  background: #ccc;
-  cursor: not-allowed;
-}
-
-/* MENSAGENS */
-.sucesso {
+.alert.sucesso {
+  background: #e6f4ea;
   color: #2e7d32;
-  font-weight: 500;
-  text-align: center;
 }
 
-.erro {
+.alert.erro {
+  background: #fdecea;
   color: #c62828;
-  font-weight: 500;
-  text-align: center;
 }
 
-/* BACKGROUND */
-body {
-  background: #f4f6f9;
+/* ===== RESPONSIVO ===== */
+@media (max-width: 768px) {
+  th, td {
+    font-size: 12px;
+    padding: 6px;
+  }
 }
 </style>

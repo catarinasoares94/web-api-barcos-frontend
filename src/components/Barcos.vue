@@ -1,13 +1,17 @@
 <template>
   <div class="table-box">
+    <h3 class="page-title">VISTA GERAL DA FROTA</h3>
     <!-- US008 - LISTAR TODOS OS BARCOS REGISTADOS NO SISTEMA -->
 
     <!-- FILTROS -->
     <div class="filters">
+      <button @click="atualizarLista">Ver Todos os Barcos</button>
       <input v-model="filtros.id" placeholder="ID" />
       <input v-model="filtros.nome" placeholder="Nome" />
       <input v-model="filtros.cor" placeholder="Cor" />
       <button class="clear" @click="limparFiltros">Limpar filtros</button>
+      <button @click="listarDisponiveis">Disponíveis Para Reserva</button>
+      <input type="date" v-model="dataSelecionada" />
     </div>
 
     <table>
@@ -16,11 +20,13 @@
           <th>ID</th>
           <th>Nome</th>
           <th>Cor</th>
-          <th>
+          <th v-if="modoDisponiveis">Reservar</th>
+
+          <th v-if="!modoDisponiveis">
             <div class="acoes-header">
               <span>Ações</span>
               <button class="add" @click="ativarCriacao" :disabled="creating">+</button>
-              <span class="novo-texto">Novo</span>
+              <span class="novo-texto">Registar Barco</span>
             </div>
           </th>
         </tr>
@@ -28,13 +34,13 @@
 
       <tbody>
         <!-- CRIAR INLINE -->
-        <tr v-if="creating">
+        <tr v-if="creating && !modoDisponiveis">
           <td><input v-model="novoInline.id_barco" /></td>
           <td><input v-model="novoInline.nome" /></td>
           <td><input v-model="novoInline.cor" /></td>
           <td>
-            <button @click="guardarNovoInline">💾</button>
-            <button @click="cancelarCriacao">❌</button>
+            <button @click="guardarNovoInline">💾 Guardar</button>
+            <button @click="cancelarCriacao">❌ Cancelar </button>
           </td>
         </tr>
 
@@ -48,13 +54,18 @@
         </tr>
 
         <!-- LISTA -->
-        <tr v-for="b in barcosPaginados" :key="b[0]">
-          <td>{{ b[0] }}</td>
-          <td>{{ b[1] }}</td>
-          <td>{{ b[2] }}</td>
+        <tr v-for="b in barcosPaginados" :key="b.ID_BARCO">
+          <td>{{ b.ID_BARCO }}</td>
+          <td>{{ b.NOME }}</td>
+          <td>{{ b.COR }}</td>
+          <td v-if="modoDisponiveis">
+            <button class="reservar-btn" @click="irParaReserva(b.ID_BARCO)">
+              ⛵ Efetuar Reserva
+            </button>
+          </td>
 
-          <td>
-            <button @click="prepararDelete(b[0])">❌</button>
+          <td v-if="!modoDisponiveis">
+            <button @click="prepararDelete(b.ID_BARCO)">❌Eliminar Barco</button>
           </td>
         </tr>
       </tbody>
@@ -73,6 +84,10 @@
 export default {
   data() {
     return {
+      // US009 - Barcos Disponiveis para Reserva (depende da data)
+      dataSelecionada: '',
+      modoDisponiveis: false,
+
       // US008 - Lista de barcos disponiveis no sistema
       barcos: [],
 
@@ -88,7 +103,7 @@ export default {
       mensagemDelete: '',
       erroDelete: '',
 
-      // ----------- TABELA -----------
+      // ----------- TABELA DE TODOS OS BARCOS
 
       currentPage: 1,
       itemsPerPage: 10,
@@ -106,15 +121,17 @@ export default {
   async mounted() {
     await this.atualizarLista()
     document.addEventListener('click', this.limparMensagensGlobal)
+    this.novaReserva.id_barco = this.$route.query.id_barco || ''
+    this.novaReserva.data = this.$route.query.data || ''
   },
 
   computed: {
     barcosFiltradosLocal() {
       return this.barcos.filter((b) => {
-        if (this.filtros.id && Number(b[0]) !== Number(this.filtros.id)) return false
-        if (this.filtros.nome && !b[1].toLowerCase().includes(this.filtros.nome.toLowerCase()))
+        if (this.filtros.id && Number(b.ID_BARCO) !== Number(this.filtros.id)) return false
+        if (this.filtros.nome && !b.NOME.toLowerCase().includes(this.filtros.nome.toLowerCase()))
           return false
-        if (this.filtros.cor && !b[2].toLowerCase().includes(this.filtros.cor.toLowerCase()))
+        if (this.filtros.cor && !b.COR.toLowerCase().includes(this.filtros.cor.toLowerCase()))
           return false
         return true
       })
@@ -131,6 +148,17 @@ export default {
   },
 
   methods: {
+    irParaReserva(id_barco) {
+      this.$router.push({
+        path: '/reservas',
+        query: {
+          id_barco: id_barco,
+          data: this.dataSelecionada,
+          modo: 'criar',
+        },
+      })
+    },
+
     limparMensagensGlobal(event) {
       const tabela = this.$el
       if (!tabela.contains(event.target)) {
@@ -228,8 +256,36 @@ export default {
       }
     },
 
+    //US009 - Barcos Disponiveis para Reserva (depende da data)
+    async listarDisponiveis() {
+      this.erroInline = ''
+      this.mensagemInline = ''
+      this.modoDisponiveis = true
+
+      if (!this.dataSelecionada) {
+        this.erroInline = 'Seleciona uma data.'
+        return
+      }
+
+      try {
+        const res = await fetch(`/api/barcos/disponiveis?data=${this.dataSelecionada}`)
+
+        if (!res.ok) {
+          const erro = await res.json()
+          this.erroInline = erro.error || 'Erro ao listar disponíveis'
+          return
+        }
+
+        this.barcos = await res.json()
+        this.currentPage = 1
+      } catch {
+        this.erroInline = 'Erro de ligação'
+      }
+    },
+
     // US008 - Lista de barcos disponiveis no sistema
     async atualizarLista() {
+      this.modoDisponiveis = false
       const res = await fetch('/api/barcos')
       this.barcos = await res.json()
 
@@ -303,111 +359,55 @@ export default {
 </script>
 
 <style>
-.pagination {
-  margin-top: 15px;
+/* ===== LAYOUT BASE ===== */
+.page {
+  width: 100vw;
+  margin-left: calc(-50vw + 50%);
   display: flex;
   justify-content: center;
-  gap: 15px;
+  padding: 30px;
+  font-family: sans-serif;
 }
 
-.pagination button {
-  padding: 8px 12px;
-  border-radius: 6px;
-  border: none;
-  background: #2c5364;
-  color: white;
-  cursor: pointer;
-}
-
-.pagination button:disabled {
-  background: #ccc;
-  cursor: not-allowed;
-}
-
-/* TABELA */
-.table-box {
-  background: white;
-  padding: 20px;
-  border-radius: 12px;
-  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
-
+.main {
+  width: 100%;
   max-width: 1200px;
   margin: 0 auto;
 }
 
-table {
-  width: 100%;
-  border-collapse: collapse;
-}
-
-th {
-  background: #f4f4f4;
-}
-
-th,
-td {
-  padding: 10px;
-  text-align: center;
-  border-bottom: 1px solid #eee;
-}
-
-/* CARDS */
+/* ===== CARD / CONTAINER ===== */
+.table-box,
 .card {
   background: white;
   padding: 20px;
-  border-radius: 12px;
-
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-
+  border-radius: 10px;
   box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
 }
 
-.card h3 {
-  margin-bottom: 10px;
+/* ===== TABELA ===== */
+table {
+  width: 100%;
+  border-collapse: collapse;
+  min-width: 700px;
 }
 
-/* INPUTS */
-input {
-  padding: 8px;
-  border-radius: 6px;
-  border: 1px solid #ccc;
-}
-
-/* BOTÕES */
-button {
-  background: #2c5364;
-  color: white;
-  border: none;
+th, td {
   padding: 10px;
-  border-radius: 8px;
-  cursor: pointer;
+  text-align: center;
+  border-bottom: 1px solid #eee;
+  white-space: nowrap;
 }
 
-button:hover {
-  background: #203a43;
+td button {
+  margin: 0 5px;
 }
 
-/* BOTÃO PRINCIPAL */
-.primary {
-  background: #ff9800;
+th {
+  background: #f8f9fa;
+  font-weight: bold;
 }
 
-.primary:hover {
-  background: #e68900;
-}
-
-/* DELETE */
-.danger button {
-  background: #c62828;
-}
-
-.danger button:hover {
-  background: #a61b1b;
-}
-
-/* FILTROS */
+/* ===== FILTROS ===== */
 .filters {
   display: flex;
   flex-wrap: wrap;
@@ -419,20 +419,76 @@ button:hover {
 .filters input {
   flex: 1 1 150px;
   max-width: 200px;
+  padding: 6px;
+  border-radius: 6px;
+  border: 1px solid #ccc;
 }
 
-/* HEADER AÇÕES */
+.filters button {
+  padding: 6px 10px;
+  border-radius: 6px;
+}
+
+/* ===== INPUTS GERAIS ===== */
+input {
+  padding: 8px;
+  border-radius: 6px;
+  border: 1px solid #ccc;
+}
+
+/* ===== BOTÕES ===== */
+button {
+  background: #2c5364;
+  color: white;
+  border: none;
+  padding: 6px 10px;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+button:hover {
+  background: #203a43;
+}
+
+button:disabled {
+  background: #ccc;
+  cursor: not-allowed;
+}
+
+/* ===== VARIAÇÕES ===== */
+.primary {
+  background: #ff9800;
+}
+.primary:hover {
+  background: #e68900;
+}
+
+.add {
+  background: #4caf50;
+}
+
+.add:hover {
+  background: #3d9442;
+}
+
+.danger {
+  background: #c62828;
+}
+
+.danger:hover {
+  background: #a61b1b;
+}
+
+.clear {
+  background: #999;
+}
+
+/* ===== AÇÕES HEADER ===== */
 .acoes-header {
   display: flex;
   align-items: center;
   justify-content: center;
   gap: 8px;
-}
-
-.add {
-  background: #4caf50;
-  padding: 6px 10px;
-  border-radius: 6px;
 }
 
 .novo-texto {
@@ -441,21 +497,44 @@ button:hover {
   font-weight: 500;
 }
 
-/* BOTÃO LIMPAR */
-.clear {
-  background: #999;
-  padding: 6px 10px;
+/* ===== INPUTS INLINE (TABELA) ===== */
+td input {
+  width: 100%;
+  padding: 6px;
+  font-size: 13px;
+}
+
+/* ===== PAGINAÇÃO ===== */
+.pagination {
+  margin-top: 15px;
+  display: flex;
+  justify-content: center;
+  gap: 15px;
+}
+
+/* ===== MENSAGENS ===== */
+.alert {
+  padding: 10px;
   border-radius: 6px;
+  margin-bottom: 10px;
+  font-weight: bold;
 }
 
-/* MENSAGENS */
-.erro {
-  color: red;
-  text-align: center;
+.alert.sucesso {
+  background: #e6f4ea;
+  color: #2e7d32;
 }
 
-.sucesso {
-  color: green;
-  text-align: center;
+.alert.erro {
+  background: #fdecea;
+  color: #c62828;
+}
+
+/* ===== RESPONSIVO ===== */
+@media (max-width: 768px) {
+  th, td {
+    font-size: 12px;
+    padding: 6px;
+  }
 }
 </style>

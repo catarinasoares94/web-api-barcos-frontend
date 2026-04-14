@@ -11,27 +11,27 @@
     <!-- CARDS -->
     <section class="cards">
       <div class="card marinheiros" @click="$router.push('/Marinheiros')">
-        <h2>Gestão de Marinheiros ⚓</h2>
+        <h2>Marinheiros ⚓</h2>
         <button>Gerir Marinheiros</button>
       </div>
 
       <div class="card barcos" @click="$router.push('/barcos')">
-        <h2>Gestão de Barcos 🚤</h2>
-        <button>Gerir Barcos</button>
+        <h2>Barcos 🚤</h2>
+        <button>Explorar Barcos</button>
       </div>
 
       <div class="card reservas" @click="$router.push('/reservas')">
-        <h2>Gestão de Reservas 📅</h2>
-        <button>Minhas Reservas</button>
+        <h2>Reservas 📅</h2>
+        <button>Gerir Reservas</button>
       </div>
     </section>
 
     <!-- SECÇÃO INFERIOR -->
     <section class="cta">
       <div class="cta-content">
-        <h2>Simplifique a Gestão Náutica!</h2>
+        <h2>Simplifique a Gestão da Sua Empresa!</h2>
         <p>
-          Uma solução completa, moderna e intuitiva para a sua empresa.
+          Uma solução completa, moderna e intuitiva.
         </p>
         
       </div>
@@ -44,6 +44,7 @@
   display: flex;
   flex-direction: column;
   gap: 40px;
+  font-family: sans-serif;
 }
 
 /* HERO */
